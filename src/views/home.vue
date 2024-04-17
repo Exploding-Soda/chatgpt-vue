@@ -1,58 +1,72 @@
 <template>
-  <div class="flex flex-col h-screen">
-    <div
-      class="flex flex-nowrap fixed w-full items-baseline top-0 px-6 py-4 bg-gray-100"
-    >
-      <div class="text-2xl font-bold">ChatGPT</div>
-      <div class="ml-4 text-sm text-gray-500">
-        基于 OpenAI 的 ChatGPT 自然语言模型人工智能对话
-      </div>
-      <div
-        class="ml-auto px-3 py-2 text-sm cursor-pointer hover:bg-white rounded-md"
-        @click="clickConfig()"
-      >
-        设置
-      </div>
-    </div>
+  <div>
 
-    <div class="flex-1 mx-2 mt-20 mb-2" ref="chatListDom">
-      <div
-        class="group flex flex-col px-4 py-3 hover:bg-slate-100 rounded-lg"
-        v-for="item of messageList.filter((v) => v.role !== 'system')"
-      >
-        <div class="flex justify-between items-center mb-2">
-          <div class="font-bold">{{ roleAlias[item.role] }}：</div>
-          <Copy class="invisible group-hover:visible" :content="item.content" />
+    <!-- WIP -->
+    <div>
+      <handWatch v-if="isHandWatchVisible" @close-watch="closeWatch"/>
+    </div>
+    <!-- WIP -->
+
+
+    <div class="flex flex-col h-screen">
+
+
+      <div class="flex flex-nowrap fixed w-full items-baseline top-0 px-6 py-4 bg-gray-100">
+        <div class="text-2xl font-bold">ChatGPT</div>
+        <div class="ml-4 text-sm text-gray-500">
+          基于 OpenAI 的 ChatGPT 自然语言模型人工智能对话
         </div>
-        <div>
-          <div
-            class="prose text-sm text-slate-600 leading-relaxed"
-            v-if="item.content"
-            v-html="md.render(item.content)"
-          ></div>
-          <Loding v-else />
+        <div class="ml-auto px-3 py-2 text-sm cursor-pointer hover:bg-white rounded-md" @click="clickConfig()">
+          设置
         </div>
       </div>
-    </div>
 
-    <div class="sticky bottom-0 w-full p-6 pb-8 bg-gray-100">
-      <div class="-mt-2 mb-2 text-sm text-gray-500" v-if="isConfig">
-        请输入 API Key：
+
+
+      <div class="flex-1 mx-2 mt-20 mb-2" ref="chatListDom">
+        <div class="group flex flex-col px-4 py-3 hover:bg-slate-100 rounded-lg"
+          v-for="item of messageList.filter((v) => v.role !== 'system')">
+          <div class="flex justify-between items-center mb-2">
+            <div class="font-bold">{{ roleAlias[item.role] }}：</div>
+            <Copy class="invisible group-hover:visible" :content="item.content" />
+          </div>
+          <div>
+            <div class="prose text-sm text-slate-600 leading-relaxed" v-if="item.content"
+              v-html="md.render(item.content)"></div>
+            <Loding v-else />
+          </div>
+        </div>
       </div>
-      <div class="flex">
-        <input
-          class="input"
-          :type="isConfig ? 'password' : 'text'"
-          :placeholder="isConfig ? 'sk-xxxxxxxxxx' : '请输入'"
-          v-model="messageContent"
-          @keydown.enter="isTalking || sendOrSave()"
-        />
-        <button class="btn" :disabled="isTalking" @click="sendOrSave()">
-          {{ isConfig ? "保存" : "发送" }}
+
+
+      <!-- WIP -->
+      <span>
+        <button @click="toggleHandWatchVisibility">
+          <p class="input">显示手表</p>
         </button>
+      </span>
+      <!-- WIP -->
+
+
+      <div class="sticky bottom-0 w-full p-6 pb-8 bg-gray-100">
+        <!-- WIP -->
+        <promptTemplate :messageList="messageList" @update:messageList="handleMessageListUpdate" />
+        <!-- WIP -->
+        <div class="-mt-2 mb-2 text-sm text-gray-500" v-if="isConfig">
+          请输入 API Key：
+        </div>
+        <div class="flex">
+          <input class="input" :type="isConfig ? 'password' : 'text'" :placeholder="isConfig ? 'sk-xxxxxxxxxx' : '请输入'"
+            v-model="messageContent" @keydown.enter="isTalking || sendOrSave()" />
+          <button class="btn" :disabled="isTalking" @click="sendOrSave()">
+            {{ isConfig ? "保存" : "发送" }}
+          </button>
+        </div>
       </div>
     </div>
   </div>
+
+
 </template>
 
 <script setup lang="ts">
@@ -63,6 +77,25 @@ import cryptoJS from "crypto-js";
 import Loding from "@/components/Loding.vue";
 import Copy from "@/components/Copy.vue";
 import { md } from "@/libs/markdown";
+// WIP
+import PromptTemplate from '@/components/PromptTemplate.vue';
+import HandWatch from "@/components/handWatch.vue";
+
+// 控制 handWatch 页面显示的状态变量
+let isHandWatchVisible = ref(false);
+
+// 切换 handWatch 页面显示的函数
+const toggleHandWatchVisibility = () => {
+  isHandWatchVisible.value = !isHandWatchVisible.value;
+};
+
+function closeWatch() {
+    isHandWatchVisible.value = false;
+}
+
+
+
+// WIP
 
 let apiKey = "";
 let isConfig = ref(true);
@@ -76,19 +109,13 @@ const messageList = ref<ChatMessage[]>([
     role: "system",
     content: "你是 ChatGPT，OpenAI 训练的大型语言模型，尽可能简洁地回答。",
   },
-  {
-    role: "assistant",
-    content: `你好，我是AI语言模型，我可以提供一些常用服务和信息，例如：
-
-1. 翻译：我可以把中文翻译成英文，英文翻译成中文，还有其他一些语言翻译，比如法语、日语、西班牙语等。
-
-2. 咨询服务：如果你有任何问题需要咨询，例如健康、法律、投资等方面，我可以尽可能为你提供帮助。
-
-3. 闲聊：如果你感到寂寞或无聊，我们可以聊一些有趣的话题，以减轻你的压力。
-
-请告诉我你需要哪方面的帮助，我会根据你的需求给你提供相应的信息和建议。`,
-  },
 ]);
+
+// WIP
+const handleMessageListUpdate = (updatedMessageList: ChatMessage[]) => {
+  // 更新 messageList
+  messageList.value = updatedMessageList;
+};
 
 onMounted(() => {
   if (getAPIKey()) {
