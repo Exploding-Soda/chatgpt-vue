@@ -28,19 +28,25 @@
   justify-content: center;
   align-items: center;
   text-align: center;
-  animation: breathing 5s infinite ease-in-out; /* 调整动画的持续时间和速度 */
+  animation: breathing 5s infinite ease-in-out;
+  /* 调整动画的持续时间和速度 */
 }
 
 /* 动画定义 */
 @keyframes breathing {
   0% {
-    background: black; /* 初始状态是黑色 */
+    background: black;
+    /* 初始状态是黑色 */
   }
+
   50% {
-    background: rgb(30, 30, 30); /* 中间状态是灰色 */
+    background: rgb(30, 30, 30);
+    /* 中间状态是灰色 */
   }
+
   100% {
-    background: black; /* 最终状态是黑色 */
+    background: black;
+    /* 最终状态是黑色 */
   }
 }
 
@@ -153,6 +159,7 @@ function closeWatch() {
 }
 // WIP
 
+
 // 时区列表，可根据需要添加或修改
 const timeZones = [
   'Asia/Shanghai',
@@ -190,19 +197,19 @@ watch(selectedTimeZone, (newTimeZone) => {
 // 格式化日期时间字符串为规范的日期、时间和星期
 const formattedDate = computed(() => {
   const date = new Date(currentDateTime.value);
-  const options = { month: 'long', day: 'numeric' };
+  const options: Intl.DateTimeFormatOptions = { month: 'long', day: 'numeric' };
   return date.toLocaleDateString('zh-CN', options);
 });
 
 const formattedTime = computed(() => {
   const date = new Date(currentDateTime.value);
-  const options = { hour: '2-digit', minute: '2-digit' };
+  const options: Intl.DateTimeFormatOptions = { hour: '2-digit', minute: '2-digit' };
   return date.toLocaleTimeString('zh-CN', options);
 });
 
 const formattedDayOfWeek = computed(() => {
   const date = new Date(currentDateTime.value);
-  const options = { weekday: 'long' };
+  const options: Intl.DateTimeFormatOptions = { weekday: 'long' };
   return date.toLocaleDateString('zh-CN', options);
 });
 </script>
