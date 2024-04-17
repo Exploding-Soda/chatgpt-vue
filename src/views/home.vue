@@ -79,7 +79,7 @@ import Copy from "@/components/Copy.vue";
 import { md } from "@/libs/markdown";
 // WIP
 import PromptTemplate from '@/components/PromptTemplate.vue';
-import HandWatch from "@/components/handWatch.vue";
+import HandWatch from "@/components/HandWatch.vue";
 
 // 控制 handWatch 页面显示的状态变量
 let isHandWatchVisible = ref(false);
