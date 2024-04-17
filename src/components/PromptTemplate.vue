@@ -15,6 +15,7 @@
 
   <div id="resultsContainer" v-show="isRepositoryVisible">
     <!-- 在这个容器中渲染 prompts -->
+    <!-- 更改一下样式 -->
     <div v-for="prompt in prompts" :key="prompt.title" class="prompt">
       <div style="border: 1px solid black;border-radius: 25px;padding: 5px 20px 5px 20px">
         <h3 class="p">{{ prompt.title }}</h3>
