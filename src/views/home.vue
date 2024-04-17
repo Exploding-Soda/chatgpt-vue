@@ -3,7 +3,7 @@
 
     <!-- WIP -->
     <div>
-      <handWatch v-if="isHandWatchVisible" @close-watch="closeWatch"/>
+      <handWatch v-if="isHandWatchVisible" @close-watch="closeWatch" />
     </div>
     <!-- WIP -->
 
@@ -11,7 +11,8 @@
     <div class="flex flex-col h-screen">
 
 
-      <div class="flex flex-nowrap fixed w-full items-baseline top-0 px-6 py-4 bg-gray-100">
+      <div v-if="messageList.length == 1"
+        class="flex flex-nowrap fixed w-full items-baseline top-0 px-6 py-4 bg-gray-100">
         <div class="text-2xl font-bold">ChatGPT</div>
         <div class="ml-4 text-sm text-gray-500">
           基于 OpenAI 的 ChatGPT 自然语言模型人工智能对话
@@ -42,7 +43,11 @@
       <!-- WIP -->
       <span>
         <button @click="toggleHandWatchVisibility">
-          <p class="input">显示手表</p>
+          <p class="input noMarginRight">手表</p>
+        </button>
+
+        <button @click="togglePromptTemplateVisibility">
+          <p class="input noMarginRight">Prompt模板</p>
         </button>
       </span>
       <!-- WIP -->
@@ -50,7 +55,8 @@
 
       <div class="sticky bottom-0 w-full p-6 pb-8 bg-gray-100">
         <!-- WIP -->
-        <promptTemplate :messageList="messageList" @update:messageList="handleMessageListUpdate" />
+        <promptTemplate v-if="isPromptTemplateVisible" :messageList="messageList"
+          @update:messageList="handleMessageListUpdate" />
         <!-- WIP -->
         <div class="-mt-2 mb-2 text-sm text-gray-500" v-if="isConfig">
           请输入 API Key：
@@ -83,14 +89,19 @@ import HandWatch from "@/components/HandWatch.vue";
 
 // 控制 handWatch 页面显示的状态变量
 let isHandWatchVisible = ref(false);
+let isPromptTemplateVisible = ref(false);
 
 // 切换 handWatch 页面显示的函数
 const toggleHandWatchVisibility = () => {
   isHandWatchVisible.value = !isHandWatchVisible.value;
 };
 
+const togglePromptTemplateVisibility = () => {
+  isPromptTemplateVisible.value = !isPromptTemplateVisible.value
+}
+
 function closeWatch() {
-    isHandWatchVisible.value = false;
+  isHandWatchVisible.value = false;
 }
 
 
@@ -107,7 +118,7 @@ const roleAlias = { user: "ME", assistant: "ChatGPT", system: "System" };
 const messageList = ref<ChatMessage[]>([
   {
     role: "system",
-    content: "你是 ChatGPT，OpenAI 训练的大型语言模型，尽可能简洁地回答。",
+    content: "请尽可能在一句话内回答用户的问题。",
   },
 ]);
 
@@ -249,5 +260,9 @@ pre {
     "Noto Sans CJK SC", "Source Han Sans SC", "Source Han Sans CN",
     "Microsoft YaHei", "Wenquanyi Micro Hei", "WenQuanYi Zen Hei", "ST Heiti",
     SimHei, "WenQuanYi Zen Hei Sharp", sans-serif;
+}
+
+.noMarginRight {
+  margin-right: 0;
 }
 </style>

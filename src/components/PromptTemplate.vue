@@ -1,30 +1,29 @@
 <template>
-  <div class="flex">
-    <input class="input" v-model="lastPrompt" :placeholder="placeHolder" />
+  <div class="wrapper">
+    <div class="input-container">
+      <input class="input" v-model="lastPrompt" :placeholder="placeHolder" />
+    </div>
+    <div class="button-container">
+      <button class="btn" @click="addMessageToList">
+        设置Prompt
+      </button>
+      <button class="btn" @click="saveTemplate">
+        保存模板
+      </button>
+      <button class="btn" @click="toggleTemplateRepository">模板仓库</button>
+    </div>
 
-    <button class="btn" style="margin-right: 10px;" @click="addMessageToList">
-      设置Prompt
-    </button>
-
-    <button class="btn" style="margin-right: 10px;" @click="saveTemplate">
-      保存模板
-    </button>
-
-    <button class="btn" @click="toggleTemplateRepository">模板仓库</button>
-  </div>
-
-  <div id="resultsContainer" v-show="isRepositoryVisible">
-    <!-- 在这个容器中渲染 prompts -->
-    <!-- 更改一下样式 -->
-    <div v-for="prompt in prompts" :key="prompt.title" class="prompt">
-      <div style="border: 1px solid black;border-radius: 25px;padding: 5px 20px 5px 20px">
-        <h3 class="p">{{ prompt.title }}</h3>
-        <p style="color:grey;">{{ prompt.content }}</p>
-        <button @click="usePrompt(prompt.content)" class="btn">使用</button>
-      <button @click="deletePrompt(prompt)" class="btn">删除</button>
+    <div id="resultsContainer" v-show="isRepositoryVisible" class="results-container">
+      <div v-for="(prompt, index) in prompts" :key="index" class="prompt-item">
+        <div class="prompt-content">
+          <h3 v-if="prompt.title">{{ prompt.title }}</h3>
+          <p>{{ prompt.content }}</p>
+          <div class="button-group">
+            <button @click="usePrompt(prompt.content)" class="btn">使用</button>
+            <button @click="deletePrompt(prompt)" class="btn">删除</button>
+          </div>
+        </div>
       </div>
-
-      <p>=== ===</p>
     </div>
   </div>
 </template>
@@ -41,13 +40,13 @@ const emit = defineEmits(['update:messageList']);
 let placeHolder = ref('输入Prompt，这将决定GPT在之后对话的个性');
 let lastPrompt = ref('');
 let isRepositoryVisible = ref(false);
-let prompts = ref([]);
+let prompts = ref<ChatMessage[]>([]);
 
 // 初始化 IndexedDB
 const openDB = async () => {
   const request = indexedDB.open('PromptDB', 1);
   return new Promise((resolve, reject) => {
-    request.onupgradeneeded = (event) => {
+    request.onupgradeneeded = () => {
       const db = request.result;
       if (!db.objectStoreNames.contains('PromptList')) {
         db.createObjectStore('PromptList', { autoIncrement: true });
@@ -60,15 +59,16 @@ const openDB = async () => {
 
 // 从数据库加载 Prompts
 const loadPrompts = async () => {
-  const db = await openDB();
+  const db: IDBDatabase = await openDB();
   const tx = db.transaction('PromptList', 'readonly');
   const store = tx.objectStore('PromptList');
-  const prompts = [];
+  const prompts: ChatMessage[] = [];
 
   return new Promise((resolve, reject) => {
     const cursorRequest = store.openCursor();
-    cursorRequest.onsuccess = (event) => {
-      const cursor = event.target.result;
+    cursorRequest.onsuccess = (event: IDBRequestEvent) => {
+      const cursor = (event.target as IDBRequest<ChatMessage>).result as IDBCursor<ChatMessage>;
+
       if (cursor) {
         prompts.push(cursor.value);
         cursor.continue();
@@ -76,16 +76,18 @@ const loadPrompts = async () => {
         resolve(prompts);
       }
     };
-    cursorRequest.onerror = (event) => {
+
+    cursorRequest.onerror = (event: IDBRequestEvent) => {
       console.error('Error loading prompts:', event);
       reject(event);
     };
+
   });
 };
 
 // 添加新的 Prompt 到数据库
 const addPrompt = async (prompt) => {
-  const db = await openDB();
+  const db: IDBDatabase = await openDB();
   const tx = db.transaction('PromptList', 'readwrite');
   const store = tx.objectStore('PromptList');
 
@@ -114,21 +116,19 @@ const deletePrompt = async (prompt) => {
 };
 
 // 查找 Prompt 的键
-const findPromptKey = async (store, prompt) => {
+const findPromptKey = async (store: IDBObjectStore, prompt: ChatMessage) => {
   const cursorRequest = store.openCursor();
   return new Promise((resolve, reject) => {
-    cursorRequest.onsuccess = (event) => {
-      const cursor = event.target.result;
+    cursorRequest.onsuccess = (event: Event) => {
+      const cursor = (event.target as IDBRequest<ChatMessage>).result;
       if (cursor) {
-        const data = cursor.value;
-        if (data.title === prompt.title && data.content === prompt.content) {
-          resolve(cursor.key);
-        }
+        prompts.push(cursor.value);
         cursor.continue();
       } else {
-        resolve(null);
+        resolve(prompts);
       }
     };
+
     cursorRequest.onerror = (event) => {
       console.error('Error finding prompt key:', event);
       reject(event);
@@ -201,20 +201,62 @@ const addMessageToList = () => {
 </script>
 
 <style scoped>
-.flex {
-  display: flex;
+.wrapper {
+  margin-bottom: 10px;
+}
+
+.input-container,
+.button-container {
+  margin-bottom: 10px;
 }
 
 .input {
-  margin-right: 10px;
+  width: 100%;
+  padding: 8px;
+  box-sizing: border-box;
 }
 
 .btn {
   margin-right: 10px;
 }
 
-.prompt {
-  display: inline-block;
-  margin-right: 10px;
+.results-container {
+  padding-top: 10px;
+}
+
+.prompt-item {
+  border: 1px solid #000;
+  border-radius: 8px;
+  padding: 10px;
+  margin-bottom: 10px;
+}
+
+.prompt-content h3 {
+  margin: 0;
+}
+
+.prompt-content p {
+  color: grey;
+  margin: 5px 0;
+}
+
+.button-group {
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* 响应式布局 */
+@media (max-width: 400px) {
+  .button-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 10px;
+  }
+
+  .btn {
+    width: 100%;
+    margin-right: 0;
+  }
 }
 </style>
