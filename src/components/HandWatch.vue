@@ -2,11 +2,18 @@
   <!-- <div class="hand-watch" v-if="isHandWatchVisible"> -->
   <div class="hand-watch" @click="closeWatch">
 
-    <div class="watchContent watch-time">{{ formattedTime }}</div>
+    <div class="watchContent watch-time">
+      <span>{{ formattedTime.split(' : ')[0] }}</span>
+      <span class="time-separator"> : </span>
+      <span>{{ formattedTime.split(' : ')[1] }}</span>
+    </div>
     <div class="time-display">
       <div class="watchContent">{{ formattedDate }} </div>
       <div class="watchContent">{{ formattedDayOfWeek }}</div>
     </div>
+
+
+
 
     <div class="timezone-selector">
       <!-- 时区选择器 -->
@@ -40,7 +47,7 @@
   }
 
   50% {
-    background: rgb(30, 30, 30);
+    background: rgb(41, 41, 41);
     /* 中间状态是灰色 */
   }
 
@@ -67,7 +74,7 @@
 }
 
 .watchContent {
-  background-color: grey;
+  color: white;
   padding: 0.5rem;
   /* 内边距 */
   border-radius: 0.5rem;
@@ -97,6 +104,29 @@
     padding: 0.3rem;
     /* 减少内边距 */
   }
+}
+
+/* 添加 CSS 动画，使冒号不停地闪动 */
+@keyframes blink {
+  0% {
+    opacity: 1;
+    /* 初始状态为完全可见 */
+  }
+
+  50% {
+    opacity: 0;
+    /* 50% 处为完全不可见 */
+  }
+
+  100% {
+    opacity: 1;
+    /* 最终状态为完全可见 */
+  }
+}
+
+/* 使冒号元素应用闪动动画 */
+.watchContent.watch-time .time-separator {
+  animation: blink 1s infinite;
 }
 </style>
 
@@ -204,8 +234,11 @@ const formattedDate = computed(() => {
 const formattedTime = computed(() => {
   const date = new Date(currentDateTime.value);
   const options: Intl.DateTimeFormatOptions = { hour: '2-digit', minute: '2-digit' };
-  return date.toLocaleTimeString('zh-CN', options);
+  const timeString = date.toLocaleTimeString('zh-CN', options);
+  // 在小时和分钟之间添加两个空格
+  return timeString.replace(':', ' : ');
 });
+
 
 const formattedDayOfWeek = computed(() => {
   const date = new Date(currentDateTime.value);

@@ -132,6 +132,17 @@ onMounted(() => {
   if (getAPIKey()) {
     switchConfigStatus();
   }
+
+  // WIP
+  // 获取用户设备的分辨率
+  const width = window.innerWidth;
+  const height = window.innerHeight;
+
+  // 如果分辨率小于500*500，则设置isHandWatchVisible为true
+  if (width < 500 && height < 500) {
+    isHandWatchVisible.value = true;
+  }
+  // WIP
 });
 
 const sendChatMessage = async (content: string = messageContent.value) => {
