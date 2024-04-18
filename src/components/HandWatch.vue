@@ -177,7 +177,7 @@
 
 
 <script setup lang="ts">
-import { ref, onMounted, watch, computed, defineProps, defineEmits } from 'vue';
+import { ref, onMounted, onBeforeUnmount, watch, computed, defineProps, defineEmits } from 'vue';
 
 // WIP
 const isHandWatchVisible = ref(false);
@@ -195,6 +195,10 @@ const timeZones = [
   'Asia/Shanghai',
   // 更多时区...
 ];
+
+// Timer用于每分钟刷新时间
+const timer = ref<number | null>(null);
+
 
 const selectedTimeZone = ref(localStorage.getItem('selectedTimeZone') || 'Asia/Shanghai'); // 获取上次保存的时区，默认 'Asia/Shanghai'
 const currentDateTime = ref('');
@@ -214,9 +218,23 @@ const updateTimeZone = () => {
   fetchTime(selectedTimeZone.value); // 更新当前时间
 };
 
+onBeforeUnmount(() => {
+  if (timer.value !== null) {
+    clearInterval(timer.value);
+    timer.value = null;
+  }
+});
+
+
 // 初始化时获取当前时间
 onMounted(() => {
   fetchTime(selectedTimeZone.value);
+
+  // 在onMounted中设置计时器，每分钟刷新时间
+  timer.value = setInterval(() => {
+    fetchTime(selectedTimeZone.value);
+  }, 60000); // 每分钟（60,000 毫秒）刷新一次时间
+
 });
 
 // 监视时区选择变化
@@ -225,7 +243,7 @@ watch(selectedTimeZone, (newTimeZone) => {
 });
 
 // 格式化日期时间字符串为规范的日期、时间和星期
-const formattedDate = computed(() => {
+let formattedDate = computed(() => {
   const date = new Date(currentDateTime.value);
   const options: Intl.DateTimeFormatOptions = { month: 'long', day: 'numeric' };
   return date.toLocaleDateString('zh-CN', options);
