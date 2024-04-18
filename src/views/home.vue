@@ -8,6 +8,9 @@
     <!-- WIP -->
 
 
+    <SpeechRecognition @update-message="updateMessageContent" />
+
+
     <div class="flex flex-col h-screen">
 
 
@@ -112,6 +115,7 @@ import { md } from "@/libs/markdown";
 // WIP
 import PromptTemplate from '@/components/PromptTemplate.vue';
 import HandWatch from "@/components/HandWatch.vue";
+import SpeechRecognition from "@/components/SpeechRecognition.vue"
 
 // 控制 handWatch 页面显示的状态变量
 let isHandWatchVisible = ref(false);
@@ -147,6 +151,12 @@ function closeWatch() {
 }
 
 
+// 语音识别
+const updateMessageContent = (newMessage) => {
+  alert('test')
+  messageContent.value = newMessage;
+};
+
 
 // WIP
 
@@ -170,6 +180,8 @@ const handleMessageListUpdate = (updatedMessageList: ChatMessage[]) => {
   messageList.value = updatedMessageList;
   togglePromptTemplateVisibility();
 };
+
+
 
 onMounted(() => {
   if (getAPIKey()) {
