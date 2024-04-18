@@ -31,8 +31,7 @@
             <Copy class="invisible group-hover:visible" :content="item.content" />
           </div>
           <div>
-            <div class="prose text-sm text-slate-600 leading-relaxed" v-if="item.content"
-              v-html="md.render(item.content)"></div>
+            <div v-if="item.content" v-html="md.render(item.content)"></div>
             <Loding v-else />
           </div>
         </div>
@@ -133,6 +132,11 @@ const messageList = ref<ChatMessage[]>([
   {
     role: "system",
     content: preSetPrompt,
+  },
+
+  {
+    role: "assistant",
+    content: "Test",
   },
 ]);
 
