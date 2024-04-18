@@ -132,12 +132,7 @@ const messageList = ref<ChatMessage[]>([
   {
     role: "system",
     content: preSetPrompt,
-  },
-
-  {
-    role: "assistant",
-    content: "Test",
-  },
+  }，
 ]);
 
 const handleMessageListUpdate = (updatedMessageList: ChatMessage[]) => {
