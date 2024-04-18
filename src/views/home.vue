@@ -42,68 +42,71 @@
         </div>
       </div>
 
-      <div class="bottom-0 w-full p-6 pb-8 chatboxArea" style="background-color:black">
-        <div v-show="isToolBarVisible">
-          <span class="functionMenu">
-            <button @click="togglePromptTemplateVisibility">
-              <p class="btn noMarginRight functionPromptTemplate">Prompt模板</p>
-            </button>
-          </span>
-        </div>
 
-        <div class="toolBarWrapper">
-          <div class="toolBarWrapperLeft">
-            <button class="toolBar" @click="toggleToolBarVisibility">
-              {{ isToolBarVisible ? "🚪" : "⚙️" }}
-            </button>
-          </div>
+    </div>
 
-          <!-- <div class="SpeechRecognition"> -->
-          <!-- SpeechRecognition 语音&声音识别 -->
-          <!-- <SpeechRecognition @update-message="updateMessageContent" /> -->
-          <!-- </div> -->
+    <div class="chatboxArea" style="background-color:black">
+      <div v-show="isToolBarVisible">
+        <span class="functionMenu">
+          <button @click="togglePromptTemplateVisibility">
+            <p class="btn noMarginRight functionPromptTemplate">Prompt模板</p>
+          </button>
+        </span>
+      </div>
 
-          <div class="toolBarWrapperRight" @click="toggleHandWatchVisibility">
-            <button class="toolBar">
-              🕰️
-            </button>
-            <!-- 后续添加更多按钮按照这个模板 -->
-            <!-- <button class="toolBar" @click="toggleAutoSwitchHandWatch">
-            🕰️
-          </button> -->
-          </div>
-        </div>
-
-        <!-- 更长输入框模块 -->
-        <div @click="toggleExtendedChatbox"
-          style="max-height:20px;text-align: center;position:relative;padding-bottom:25px">{{ isExtendChatboxVisible ?
-            '▲' : '▼' }}</div>
-        <div v-if="isExtendChatboxVisible" style="height:100%;width:100%;word-wrap: break-word;white-space: normal;">
-          <textarea class="input" style="width:100%;min-height:200px;color:black" v-model="messageContent"></textarea>
-        </div>
-        <!-- 更长输入框模块 -->
-
-        <div class="-mt-2 mb-2 text-sm text-gray-500" v-if="isConfig">
-          请输入 API Key：
-        </div>
-        <div class="flex" v-if="!isExtendChatboxVisible">
-          <input class="input" :type="isConfig ? 'password' : 'text'" :placeholder="isConfig ? 'sk-xxxxxxxxxx' : '请输入'"
-            v-model="messageContent" @keydown.enter="isTalking || sendOrSave()" />
-          <button class="" :disabled="isTalking" @click="sendOrSave()">
-            {{ isConfig ? "保存" : "发送" }}
+      <div class="toolBarWrapper">
+        <div class="toolBarWrapperLeft">
+          <button class="toolBar" @click="toggleToolBarVisibility">
+            {{ isToolBarVisible ? "🚪" : "⚙️" }}
           </button>
         </div>
 
-        <div style="height:5px;"></div>
-        <!-- PromptTemplate提示词模块 -->
-        <promptTemplate v-if="isPromptTemplateVisible" :messageList="messageList"
-          @update:messageList="handleMessageListUpdate" @update:hidePromptTemplate="togglePromptTemplateVisibility" />
-        <!-- PromptTemplate提示词模块 -->
+        <!-- <div class="SpeechRecognition"> -->
+        <!-- SpeechRecognition 语音&声音识别 -->
+        <!-- <SpeechRecognition @update-message="updateMessageContent" /> -->
+        <!-- </div> -->
 
-
-
+        <div class="toolBarWrapperRight" @click="toggleHandWatchVisibility">
+          <button class="toolBar">
+            🕰️
+          </button>
+          <!-- 后续添加更多按钮按照这个模板 -->
+          <!-- <button class="toolBar" @click="toggleAutoSwitchHandWatch">
+            🕰️
+          </button> -->
+        </div>
       </div>
+
+      <!-- 更长输入框模块 -->
+      <div @click="toggleExtendedChatbox"
+        style="max-height:20px;text-align: center;position:relative;padding-bottom:25px">{{ isExtendChatboxVisible ?
+          '▲' : '▼' }}</div>
+      <div v-if="isExtendChatboxVisible" style="height:100%;width:100%;word-wrap: break-word;white-space: normal;">
+        <textarea class="input" style="width:100%;min-height:200px;color:black" v-model="messageContent"></textarea>
+      </div>
+      <!-- 更长输入框模块 -->
+
+      <div class="-mt-2 mb-2 text-sm text-gray-500" v-if="isConfig">
+        请输入 API Key：
+      </div>
+      <div class="flex" v-if="!isExtendChatboxVisible">
+        <input class="input" :type="isConfig ? 'password' : 'text'" :placeholder="isConfig ? 'sk-xxxxxxxxxx' : '请输入'"
+          v-model="messageContent" @keydown.enter="isTalking || sendOrSave()" />
+        <button class="" :disabled="isTalking" @click="sendOrSave()">
+          {{ isConfig ? "保存" : "发送" }}
+        </button>
+      </div>
+
+      <div style="height:5px;"></div>
+      <!-- PromptTemplate提示词模块 -->
+      <promptTemplate v-if="isPromptTemplateVisible" :messageList="messageList"
+        @update:messageList="handleMessageListUpdate" @update:hidePromptTemplate="togglePromptTemplateVisibility" />
+      <!-- PromptTemplate提示词模块 -->
+
+
+
     </div>
+
   </div>
 
 
@@ -189,6 +192,7 @@ const messageList = ref<ChatMessage[]>([
     role: "system",
     content: preSetPrompt,
   },
+
 ]);
 
 const handleMessageListUpdate = (updatedMessageList: ChatMessage[]) => {
@@ -401,11 +405,6 @@ pre {
   max-width: 150px;
 }
 
-.backgroundWrapper {
-  /* height: 100vh; */
-  min-height: 100vh;
-  background-color: black;
-}
 
 /* .SpeechRecognition {
   height: 10px;
@@ -436,56 +435,25 @@ body {
   top: 0;
 }
 
-/* 原始样式 */
-.chatArea {
-  min-height: 400px;
-  height: 78vh;
+
+
+
+/* 这个和下面的chatboxArea一起占用整个屏幕90vh+10vh（高）确保响应式 */
+.backgroundWrapper {
+  min-height: 90vh;
+  background-color: black;
 }
-
-/* 媒体查询 */
-/* 在设备高度小于等于 500px 时的样式 */
-@media (max-height: 500px) {
-  .chatArea {
-    min-height: 150px;
-    /* 可根据需求调整 */
-    height: 40vh;
-    /* 可根据需求调整 */
-  }
-}
-
-/* 在设备高度大于 500px 且小于等于 700px 时的样式 */
-@media (min-height: 501px) and (max-height: 700px) {
-  .chatArea {
-    min-height: 200px;
-    /* 可根据需求调整 */
-    height: 58vh;
-    /* 可根据需求调整 */
-  }
-}
-
-/* 在设备高度大于 700px 且小于等于 1000px 时的样式 */
-@media (min-height: 701px) and (max-height: 1000px) {
-  .chatArea {
-    min-height: 250px;
-    /* 可根据需求调整 */
-    height: 69vh;
-    /* 可根据需求调整 */
-  }
-}
-
-/* 在设备高度大于 1000px 且小于等于 1500px 时的样式 */
-@media (min-height: 1001px) and (max-height: 1500px) {
-  .chatArea {
-    min-height: 300px;
-    /* 可根据需求调整 */
-    height: 78vh;
-    /* 可根据需求调整 */
-  }
-}
-
-
 
 .chatboxArea {
+  /* 不能加absolute */
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+
+  min-height: 10vh;
+  width: 100%;
+  padding-left: 10px;
+  padding-right: 10px;
   padding-bottom: 0px;
 }
 </style>
