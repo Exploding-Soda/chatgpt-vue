@@ -58,10 +58,10 @@
             </button>
           </div>
 
-          <div class="SpeechRecognition">
-            <!-- SpeechRecognition 声音识别 -->
-            <SpeechRecognition @update-message="updateMessageContent" />
-          </div>
+          <!-- <div class="SpeechRecognition"> -->
+          <!-- SpeechRecognition 语音&声音识别 -->
+          <!-- <SpeechRecognition @update-message="updateMessageContent" /> -->
+          <!-- </div> -->
 
           <div class="toolBarWrapperRight" @click="toggleHandWatchVisibility">
             <button class="toolBar">
@@ -75,8 +75,9 @@
         </div>
 
         <!-- 更长输入框模块 -->
-        <div @click="toggleExtendedChatbox" style="max-height:20px;text-align: center;">{{ isExtendChatboxVisible ?
-          '▲' : '▼' }}</div>
+        <div @click="toggleExtendedChatbox"
+          style="max-height:20px;text-align: center;position:relative;padding-bottom:25px">{{ isExtendChatboxVisible ?
+            '▲' : '▼' }}</div>
         <div v-if="isExtendChatboxVisible" style="height:100%;width:100%;word-wrap: break-word;white-space: normal;">
           <textarea class="input" style="width:100%;min-height:200px;color:black" v-model="messageContent"></textarea>
         </div>
@@ -119,7 +120,7 @@ import { md } from "@/libs/markdown";
 // WIP
 import PromptTemplate from '@/components/PromptTemplate.vue';
 import HandWatch from "@/components/HandWatch.vue";
-import SpeechRecognition from "@/components/SpeechRecognition.vue"
+// import SpeechRecognition from "@/components/SpeechRecognition.vue"
 
 // 控制 handWatch 页面显示的状态变量
 let isHandWatchVisible = ref(false);
@@ -160,9 +161,9 @@ function closeWatch() {
 
 
 // 语音识别
-const updateMessageContent = (newMessage) => {
-  messageContent.value = newMessage;
-};
+// const updateMessageContent = (newMessage) => {
+//   messageContent.value = newMessage;
+// };
 
 // 延长的聊天输入框
 const toggleExtendedChatbox = () => {
@@ -406,11 +407,11 @@ pre {
   background-color: black;
 }
 
-.SpeechRecognition {
+/* .SpeechRecognition {
   height: 10px;
   position: relative;
   bottom: 20px;
-}
+} */
 
 body {
   background-color: black;
