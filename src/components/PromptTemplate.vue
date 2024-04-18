@@ -1,8 +1,10 @@
 <template>
   <div class="wrapper">
+
     <div class="input-container">
       <input class="input" v-model="lastPrompt" :placeholder="placeHolder" />
     </div>
+
     <div class="button-container">
       <button class="btn" @click="addMessageToList">
         设置Prompt
@@ -11,6 +13,7 @@
         保存模板
       </button>
       <button class="btn" @click="toggleTemplateRepository">模板仓库</button>
+      <button class="btn" @click="hideTemplate">返回</button>
     </div>
 
     <div id="resultsContainer" v-show="isRepositoryVisible" class="results-container">
@@ -20,21 +23,26 @@
           <p>{{ prompt.content }}</p>
           <div class="button-group">
             <button @click="usePrompt(prompt.content)" class="btn">使用</button>
-            <button @click="deletePrompt(prompt)" class="btn">删除</button>
+            <!-- 有标题，而且没找到我不希望删的标题 -->
+            <button @click="deletePrompt(prompt)" class="btn"
+              v-show="prompt.title && prompt.title.indexOf('简短回复') === -1">删除</button>
+
           </div>
         </div>
       </div>
     </div>
+
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import type { ChatMessage } from '@/types';
+import { Perspective } from '@icon-park/vue-next';
 
 // 定义属性和事件
 const props = defineProps<{ messageList: ChatMessage[] }>();
-const emit = defineEmits(['update:messageList']);
+const emit = defineEmits(['update:messageList', 'update:hidePromptTemplate']);
 
 // 定义 reactive 状态
 let placeHolder = ref('输入Prompt，这将决定GPT在之后对话的个性');
@@ -117,15 +125,26 @@ const deletePrompt = async (prompt) => {
 
 // 查找 Prompt 的键
 const findPromptKey = async (store: IDBObjectStore, prompt: ChatMessage) => {
-  const cursorRequest = store.openCursor();
   return new Promise((resolve, reject) => {
-    cursorRequest.onsuccess = (event: Event) => {
-      const cursor = (event.target as IDBRequest<ChatMessage>).result;
+    const cursorRequest = store.openCursor();
+
+    cursorRequest.onsuccess = (event: IDBRequestEvent) => {
+      const cursor = event.target.result;
+
       if (cursor) {
-        prompts.push(cursor.value);
-        cursor.continue();
+        const currentPrompt = cursor.value;
+
+        // 比较当前游标中的 Prompt 和给定的 Prompt
+        if (currentPrompt.content === prompt.content && currentPrompt.title === prompt.title) {
+          // 找到匹配的 Prompt，返回键
+          resolve(cursor.key);
+          cursor.continue(); // 继续遍历
+        } else {
+          cursor.continue(); // 继续遍历
+        }
       } else {
-        resolve(prompts);
+        // 没有更多的游标记录
+        resolve(null);
       }
     };
 
@@ -135,6 +154,7 @@ const findPromptKey = async (store: IDBObjectStore, prompt: ChatMessage) => {
     };
   });
 };
+
 
 // 刷新 Prompts 列表
 const refreshPrompts = async () => {
@@ -159,7 +179,7 @@ const saveTemplate = async () => {
 };
 
 // 使用 Prompt
-const usePrompt = (promptContent) => {
+const usePrompt = (promptContent: string) => {
   lastPrompt.value = promptContent;
 
   // 隐藏模板仓库容器
@@ -188,16 +208,27 @@ const addMessageToList = () => {
       content: lastPrompt.value.trim(),
     };
 
+
     const updatedMessageList = [newChatMessage, ...props.messageList];
     const filteredMessageList = updatedMessageList.filter(
       (message, index) => message.role !== 'system' || index === 0
     );
 
     emit('update:messageList', filteredMessageList);
+
+
     placeHolder.value = lastPrompt.value;
     lastPrompt.value = '';
   }
 };
+
+const test = () => {
+  alert('test')
+}
+
+const hideTemplate = () => {
+  emit('update:hidePromptTemplate');
+}
 </script>
 
 <style scoped>

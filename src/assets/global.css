@@ -1,0 +1,16 @@
+
+/* 黑底白字的全局样式 */
+.mainWrapper {
+  background-color: black; /* 设置整体背景颜色为黑色 */
+  color: white; /* 设置整体文本颜色为白色 */
+}
+
+/* 调整按钮样式，使其与黑底白字主题匹配 */
+button {
+  background-color: black; /* 设置按钮背景颜色为黑色 */
+  color: white; /* 设置按钮文本颜色为白色 */
+  border: 1px solid white; /* 增加按钮的白色边框 */
+  padding: 10px;
+  border-radius: 5px;
+  cursor: pointer; /* 鼠标悬停时显示手型光标 */
+}

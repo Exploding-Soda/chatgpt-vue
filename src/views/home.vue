@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="mainWrapper">
 
     <!-- WIP -->
     <div>
@@ -11,14 +11,13 @@
     <div class="flex flex-col h-screen">
 
 
-      <div v-if="messageList.length == 1"
-        class="flex flex-nowrap fixed w-full items-baseline top-0 px-6 py-4 bg-gray-100">
+      <div v-if="messageList.length == 1" class="flex flex-nowrap fixed w-full items-baseline top-0 px-6 py-4">
         <div class="text-2xl font-bold">ChatGPT</div>
-        <div class="ml-4 text-sm text-gray-500">
-          基于 OpenAI 的 ChatGPT 自然语言模型人工智能对话
+        <div class="ml-4 text-sm">
+          OpenAI 的 ChatGPT
         </div>
         <div class="ml-auto px-3 py-2 text-sm cursor-pointer hover:bg-white rounded-md" @click="clickConfig()">
-          设置
+          🛠️
         </div>
       </div>
 
@@ -41,7 +40,8 @@
 
 
       <!-- WIP -->
-      <span>
+
+      <span v-show="isToolBarVisible">
         <button @click="toggleHandWatchVisibility">
           <p class="input noMarginRight">手表</p>
         </button>
@@ -50,13 +50,15 @@
           <p class="input noMarginRight">Prompt模板</p>
         </button>
       </span>
+      <button class="toolBar" @click="toggleToolBarVisibility"> {{
+        isToolBarVisible ? "🚪" : "⚙️" }} </button>
       <!-- WIP -->
 
 
-      <div class="sticky bottom-0 w-full p-6 pb-8 bg-gray-100">
+      <div class="sticky bottom-0 w-full p-6 pb-8">
         <!-- WIP -->
-        <promptTemplate v-if="isPromptTemplateVisible" :messageList="messageList"
-          @update:messageList="handleMessageListUpdate" />
+        <promptTemplate v-show="isPromptTemplateVisible" :messageList="messageList"
+          @update:messageList="handleMessageListUpdate" @update:hidePromptTemplate="togglePromptTemplateVisibility" />
         <!-- WIP -->
         <div class="-mt-2 mb-2 text-sm text-gray-500" v-if="isConfig">
           请输入 API Key：
@@ -64,7 +66,7 @@
         <div class="flex">
           <input class="input" :type="isConfig ? 'password' : 'text'" :placeholder="isConfig ? 'sk-xxxxxxxxxx' : '请输入'"
             v-model="messageContent" @keydown.enter="isTalking || sendOrSave()" />
-          <button class="btn" :disabled="isTalking" @click="sendOrSave()">
+          <button class="" :disabled="isTalking" @click="sendOrSave()">
             {{ isConfig ? "保存" : "发送" }}
           </button>
         </div>
@@ -90,6 +92,7 @@ import HandWatch from "@/components/HandWatch.vue";
 // 控制 handWatch 页面显示的状态变量
 let isHandWatchVisible = ref(false);
 let isPromptTemplateVisible = ref(false);
+let isToolBarVisible = ref(false)
 
 // 切换 handWatch 页面显示的函数
 const toggleHandWatchVisibility = () => {
@@ -98,6 +101,16 @@ const toggleHandWatchVisibility = () => {
 
 const togglePromptTemplateVisibility = () => {
   isPromptTemplateVisible.value = !isPromptTemplateVisible.value
+}
+
+const toggleToolBarVisibility = () => {
+  isToolBarVisible.value = !isToolBarVisible.value
+  if (isToolBarVisible.value == false) {
+    // addhere
+    isHandWatchVisible.value = false;
+    isPromptTemplateVisible.value = false;
+    isToolBarVisible.value = false
+  }
 }
 
 function closeWatch() {
@@ -115,17 +128,18 @@ let messageContent = ref("");
 const chatListDom = ref<HTMLDivElement>();
 const decoder = new TextDecoder("utf-8");
 const roleAlias = { user: "ME", assistant: "ChatGPT", system: "System" };
+const preSetPrompt = '请尽可能在一句话内回答用户的问题。'
 const messageList = ref<ChatMessage[]>([
   {
     role: "system",
-    content: "请尽可能在一句话内回答用户的问题。",
+    content: preSetPrompt,
   },
 ]);
 
-// WIP
 const handleMessageListUpdate = (updatedMessageList: ChatMessage[]) => {
   // 更新 messageList
   messageList.value = updatedMessageList;
+  togglePromptTemplateVisibility();
 };
 
 onMounted(() => {
@@ -261,6 +275,10 @@ const scrollToBottom = () => {
   scrollTo(0, chatListDom.value.scrollHeight);
 };
 
+const test = () => {
+  alert('test')
+}
+
 watch(messageList.value, () => nextTick(() => scrollToBottom()));
 </script>
 
@@ -275,5 +293,14 @@ pre {
 
 .noMarginRight {
   margin-right: 0;
+}
+
+.toolBar {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  width: 8%;
+  max-height: 8%;
 }
 </style>
