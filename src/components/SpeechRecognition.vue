@@ -1,7 +1,7 @@
 <template>
   <div>
     <button @click="toggleRecognition">{{ isListening ? '停止语音识别' : '开始语音识别' }}</button>
-    <p>{{ fullTranscript + interimTranscript }}</p>
+
   </div>
 </template>
 
@@ -51,11 +51,12 @@ export default {
         const transcriptPart = event.results[i][0].transcript;
         if (event.results[i].isFinal) {
           fullTranscript.value += transcriptPart + ' ';
-          emit('update-message', fullTranscript.value); // 触发自定义事件
         } else {
           interimTranscript.value += transcriptPart;
         }
       }
+      // 触发事件，将实时更新的识别文本发送给父组件
+      emit('update-message', fullTranscript.value + interimTranscript.value);
     };
 
     const onRecognitionError = (event) => {

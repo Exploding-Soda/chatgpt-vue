@@ -6,15 +6,10 @@
       <handWatch v-if="isHandWatchVisible" @close-watch="closeWatch" />
     </div>
     <!-- WIP -->
+    <div class="backgroundWrapper">
 
 
-    <SpeechRecognition @update-message="updateMessageContent" />
-
-
-    <div class="flex flex-col h-screen">
-
-
-      <div v-if="messageList.length == 1" class="flex flex-nowrap w-full items-baseline top-0 px-6 py-4">
+      <div class="flex flex-nowrap w-full items-baseline top-0 px-6 py-4">
         <div class="text-2xl font-bold">ChatGPT</div>
         <div class="ml-4 text-sm">
           OpenAI 的 ChatGPT
@@ -24,10 +19,17 @@
         </div>
       </div>
 
+      <!-- 滚动到底部 -->
+      <div class='scrollToBottomWrapper'>
+        <span>
+          <button @click="scrollToBottom">
+            <p class="btn noMarginRight scrollToBottom">底部</p>
+          </button>
+        </span>
+      </div>
 
-
-      <div class="flex-1 mx-2 mt-20 mb-2" ref="chatListDom">
-        <div class="group flex flex-col px-4 py-3 hover:bg-slate-100 rounded-lg"
+      <div class="chatArea" style="background-color: black;" ref="chatListDom">
+        <div class="group flex flex-col px-4 py-3 hover:bg-gray-800 rounded-lg"
           v-for="item of messageList.filter((v) => v.role !== 'system')">
           <div class="flex justify-between items-center mb-2">
             <div class="font-bold">{{ roleAlias[item.role] }}：</div>
@@ -40,64 +42,66 @@
         </div>
       </div>
 
-
-      <!-- WIP -->
-
-      <div v-show="isToolBarVisible" class="functionMenuWrapper">
-        <!-- <button @click="toggleHandWatchVisibility">
-          <p class="input noMarginRight">手表</p>
-        </button> -->
-        <span class="functionMenu">
-          <button @click="togglePromptTemplateVisibility">
-            <p class="btn noMarginRight functionPromptTemplate">Prompt模板</p>
-          </button>
-        </span>
-      </div>
-
-
-      <div class="toolBarWrapper">
-        <div class="toolBarWrapperLeft">
-          <button class="toolBar" @click="toggleToolBarVisibility">
-            {{ isToolBarVisible ? "🚪" : "⚙️" }}
-          </button>
+      <div class="bottom-0 w-full p-6 pb-8 chatboxArea" style="background-color:black">
+        <div v-show="isToolBarVisible">
+          <span class="functionMenu">
+            <button @click="togglePromptTemplateVisibility">
+              <p class="btn noMarginRight functionPromptTemplate">Prompt模板</p>
+            </button>
+          </span>
         </div>
-        <div class="toolBarWrapperRight" @click="toggleHandWatchVisibility">
-          <button class="toolBar">
-            🕰️
-          </button>
-          <!-- 后续添加更多按钮按照这个模板 -->
-          <!-- <button class="toolBar" @click="toggleAutoSwitchHandWatch">
+
+        <div class="toolBarWrapper">
+          <div class="toolBarWrapperLeft">
+            <button class="toolBar" @click="toggleToolBarVisibility">
+              {{ isToolBarVisible ? "🚪" : "⚙️" }}
+            </button>
+          </div>
+
+          <div class="SpeechRecognition">
+            <!-- SpeechRecognition 声音识别 -->
+            <SpeechRecognition @update-message="updateMessageContent" />
+          </div>
+
+          <div class="toolBarWrapperRight" @click="toggleHandWatchVisibility">
+            <button class="toolBar">
+              🕰️
+            </button>
+            <!-- 后续添加更多按钮按照这个模板 -->
+            <!-- <button class="toolBar" @click="toggleAutoSwitchHandWatch">
             🕰️
           </button> -->
+          </div>
         </div>
-      </div>
 
+        <!-- 更长输入框模块 -->
+        <div @click="toggleExtendedChatbox" style="max-height:20px;text-align: center;">{{ isExtendChatboxVisible ?
+          '▲' : '▼' }}</div>
+        <div v-if="isExtendChatboxVisible" style="height:100%;width:100%;word-wrap: break-word;white-space: normal;">
+          <textarea class="input" style="width:100%;min-height:200px;color:black" v-model="messageContent"></textarea>
+        </div>
+        <!-- 更长输入框模块 -->
 
-      <!-- WIP -->
-
-
-
-      <div class="sticky bottom-0 w-full p-6 pb-8">
         <div class="-mt-2 mb-2 text-sm text-gray-500" v-if="isConfig">
           请输入 API Key：
         </div>
-        <div class="flex">
+        <div class="flex" v-if="!isExtendChatboxVisible">
           <input class="input" :type="isConfig ? 'password' : 'text'" :placeholder="isConfig ? 'sk-xxxxxxxxxx' : '请输入'"
             v-model="messageContent" @keydown.enter="isTalking || sendOrSave()" />
           <button class="" :disabled="isTalking" @click="sendOrSave()">
             {{ isConfig ? "保存" : "发送" }}
           </button>
         </div>
+
+        <div style="height:5px;"></div>
+        <!-- PromptTemplate提示词模块 -->
+        <promptTemplate v-if="isPromptTemplateVisible" :messageList="messageList"
+          @update:messageList="handleMessageListUpdate" @update:hidePromptTemplate="togglePromptTemplateVisibility" />
+        <!-- PromptTemplate提示词模块 -->
+
+
+
       </div>
-
-      <!-- WIP -->
-      <promptTemplate v-show="isPromptTemplateVisible" :messageList="messageList"
-        @update:messageList="handleMessageListUpdate" @update:hidePromptTemplate="togglePromptTemplateVisibility" />
-      <!-- WIP -->
-
-
-
-
     </div>
   </div>
 
@@ -121,6 +125,7 @@ import SpeechRecognition from "@/components/SpeechRecognition.vue"
 let isHandWatchVisible = ref(false);
 let isPromptTemplateVisible = ref(false);
 let isToolBarVisible = ref(false)
+let isExtendChatboxVisible = ref(false)
 
 // 切换 handWatch 页面显示的函数
 const toggleHandWatchVisibility = () => {
@@ -131,6 +136,8 @@ const toggleHandWatchVisibility = () => {
 const togglePromptTemplateVisibility = () => {
   isPromptTemplateVisible.value = !isPromptTemplateVisible.value
   isToolBarVisible.value = false
+
+  scrollToBottom();
 }
 
 // 齿轮标签打开的菜单
@@ -142,8 +149,9 @@ const toggleToolBarVisibility = () => {
   if (anyMenuIsOn) {
     isHandWatchVisible.value = false;
     isPromptTemplateVisible.value = false;
-    isToolBarVisible.value = false
+    isToolBarVisible.value = false;
   }
+  scrollToBottom();
 }
 
 function closeWatch() {
@@ -153,9 +161,16 @@ function closeWatch() {
 
 // 语音识别
 const updateMessageContent = (newMessage) => {
-  alert('test')
   messageContent.value = newMessage;
 };
+
+// 延长的聊天输入框
+const toggleExtendedChatbox = () => {
+  isExtendChatboxVisible.value = !isExtendChatboxVisible.value
+  setTimeout(() => {
+    scrollToBottom();
+  }, 20);
+}
 
 
 // WIP
@@ -198,6 +213,7 @@ onMounted(() => {
     isHandWatchVisible.value = true;
   }
   // WIP
+
 });
 
 const sendChatMessage = async (content: string = messageContent.value) => {
@@ -284,6 +300,7 @@ const clickConfig = () => {
     clearMessageContent();
   }
   switchConfigStatus();
+  scrollToBottom();
 };
 
 const getSecretKey = () => "lianginx";
@@ -313,7 +330,7 @@ const clearMessageContent = () => (messageContent.value = "");
 
 const scrollToBottom = () => {
   if (!chatListDom.value) return;
-  scrollTo(0, chatListDom.value.scrollHeight);
+  scrollTo(0, chatListDom.value.scrollHeight + 15000);
 };
 
 const test = () => {
@@ -349,9 +366,10 @@ pre {
 .toolBarWrapper {
   display: flex;
   justify-content: space-between;
-  padding-left: 25px;
+  padding-left: 0px;
+  padding-bottom: 0px;
   height: 5%;
-  max-height: 5%;
+  /* max-height: 5%; */
 }
 
 .toolBarWrapperLeft {
@@ -361,17 +379,16 @@ pre {
 
 .toolBarWrapperRight {
   gap: 5px;
-  padding-right: 25px;
+  padding-right: 0px;
   display: flex;
   justify-content: end;
 }
 
-.functionMenuWrapper {
-  padding-left: 25px;
-  padding-bottom: 15px;
-}
 
 .functionMenu {
+  position: fixed;
+  top: 0;
+  left: 0;
   gap: 25px;
 }
 
@@ -381,5 +398,93 @@ pre {
 
 .functionPromptTemplate {
   max-width: 150px;
+}
+
+.backgroundWrapper {
+  /* height: 100vh; */
+  min-height: 100vh;
+  background-color: black;
+}
+
+.SpeechRecognition {
+  height: 10px;
+  position: relative;
+  bottom: 20px;
+}
+
+body {
+  background-color: black;
+}
+
+.scrollToBottom {
+  z-index: -1;
+  display: flex;
+  justify-content: center;
+  text-align: center;
+  height: 2%;
+  width: 3%;
+  max-height: 5px;
+  max-width: 10px;
+  align-items: center;
+}
+
+.scrollToBottomWrapper {
+  display: flex;
+  justify-content: center;
+  position: sticky;
+  top: 0;
+}
+
+/* 原始样式 */
+.chatArea {
+  min-height: 400px;
+  height: 78vh;
+}
+
+/* 媒体查询 */
+/* 在设备高度小于等于 500px 时的样式 */
+@media (max-height: 500px) {
+  .chatArea {
+    min-height: 150px;
+    /* 可根据需求调整 */
+    height: 40vh;
+    /* 可根据需求调整 */
+  }
+}
+
+/* 在设备高度大于 500px 且小于等于 700px 时的样式 */
+@media (min-height: 501px) and (max-height: 700px) {
+  .chatArea {
+    min-height: 200px;
+    /* 可根据需求调整 */
+    height: 58vh;
+    /* 可根据需求调整 */
+  }
+}
+
+/* 在设备高度大于 700px 且小于等于 1000px 时的样式 */
+@media (min-height: 701px) and (max-height: 1000px) {
+  .chatArea {
+    min-height: 250px;
+    /* 可根据需求调整 */
+    height: 69vh;
+    /* 可根据需求调整 */
+  }
+}
+
+/* 在设备高度大于 1000px 且小于等于 1500px 时的样式 */
+@media (min-height: 1001px) and (max-height: 1500px) {
+  .chatArea {
+    min-height: 300px;
+    /* 可根据需求调整 */
+    height: 78vh;
+    /* 可根据需求调整 */
+  }
+}
+
+
+
+.chatboxArea {
+  padding-bottom: 0px;
 }
 </style>

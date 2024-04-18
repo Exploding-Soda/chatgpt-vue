@@ -25,7 +25,8 @@
 <style scoped>
 /* 全局样式 */
 .hand-watch {
-  position: absolute;
+
+  position: fixed;
   z-index: 10;
   width: 100vw;
   height: 100vh;

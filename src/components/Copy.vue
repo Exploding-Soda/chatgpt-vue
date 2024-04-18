@@ -33,31 +33,12 @@ const copyToClipboard = (content: string = porps.content) => {
 
 <template>
   <div class="flex items-center cursor-pointer" @click="copyToClipboard()">
-    <copy
-      v-show="btnStatus === 'copy'"
-      :theme="btnConfig.theme"
-      :size="btnConfig.size"
-      :fill="btnConfig.fill"
-    />
-    <loading
-      class="rotate"
-      v-show="btnStatus === 'loading'"
-      :theme="btnConfig.theme"
-      :size="btnConfig.size"
-      :fill="btnConfig.fill"
-    />
-    <check-one
-      v-show="btnStatus === 'success'"
-      :theme="btnConfig.theme"
-      :size="btnConfig.size"
-      :fill="btnConfig.fill"
-    />
-    <close-one
-      v-show="btnStatus === 'error'"
-      :theme="btnConfig.theme"
-      :size="btnConfig.size"
-      :fill="btnConfig.fill"
-    />
+    <copy v-show="btnStatus === 'copy'" :theme="btnConfig.theme" :size="btnConfig.size" :fill="btnConfig.fill" />
+    <loading class="rotate" v-show="btnStatus === 'loading'" :theme="btnConfig.theme" :size="btnConfig.size"
+      :fill="btnConfig.fill" />
+    <check-one v-show="btnStatus === 'success'" :theme="btnConfig.theme" :size="btnConfig.size"
+      :fill="btnConfig.fill" />
+    <close-one v-show="btnStatus === 'error'" :theme="btnConfig.theme" :size="btnConfig.size" :fill="btnConfig.fill" />
     <span class="text-xs ml-0.5 text-gray-500 leading-none">{{
       btnTips[btnStatus]
     }}</span>
@@ -69,6 +50,7 @@ const copyToClipboard = (content: string = porps.content) => {
   0% {
     transform: rotate(0deg);
   }
+
   100% {
     transform: rotate(360deg);
   }

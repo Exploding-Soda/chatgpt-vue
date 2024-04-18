@@ -7,7 +7,7 @@
 
     <div class="button-container">
       <button class="btn templateControlButton" @click="addMessageToList">
-        设置Prompt
+        使用
       </button>
       <button class="btn templateControlButton" @click="saveTemplate">
         保存模板
@@ -293,7 +293,7 @@ const hideTemplate = () => {
 }
 
 .templateControlButton {
-  width: 40%;
+  width: 25%;
   max-width: 1000px;
 }
 </style>
