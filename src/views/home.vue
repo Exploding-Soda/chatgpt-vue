@@ -11,7 +11,7 @@
     <div class="flex flex-col h-screen">
 
 
-      <div v-if="messageList.length == 1" class="flex flex-nowrap fixed w-full items-baseline top-0 px-6 py-4">
+      <div v-if="messageList.length == 1" class="flex flex-nowrap w-full items-baseline top-0 px-6 py-4">
         <div class="text-2xl font-bold">ChatGPT</div>
         <div class="ml-4 text-sm">
           OpenAI 的 ChatGPT
@@ -40,25 +40,41 @@
 
       <!-- WIP -->
 
-      <span v-show="isToolBarVisible">
-        <button @click="toggleHandWatchVisibility">
+      <div v-show="isToolBarVisible" class="functionMenuWrapper">
+        <!-- <button @click="toggleHandWatchVisibility">
           <p class="input noMarginRight">手表</p>
-        </button>
+        </button> -->
+        <span class="functionMenu">
+          <button @click="togglePromptTemplateVisibility">
+            <p class="btn noMarginRight functionPromptTemplate">Prompt模板</p>
+          </button>
+        </span>
+      </div>
 
-        <button @click="togglePromptTemplateVisibility">
-          <p class="input noMarginRight">Prompt模板</p>
-        </button>
-      </span>
-      <button class="toolBar" @click="toggleToolBarVisibility"> {{
-        isToolBarVisible ? "🚪" : "⚙️" }} </button>
+
+      <div class="toolBarWrapper">
+        <div class="toolBarWrapperLeft">
+          <button class="toolBar" @click="toggleToolBarVisibility">
+            {{ isToolBarVisible ? "🚪" : "⚙️" }}
+          </button>
+        </div>
+        <div class="toolBarWrapperRight" @click="toggleHandWatchVisibility">
+          <button class="toolBar">
+            🕰️
+          </button>
+          <!-- 后续添加更多按钮按照这个模板 -->
+          <!-- <button class="toolBar" @click="toggleAutoSwitchHandWatch">
+            🕰️
+          </button> -->
+        </div>
+      </div>
+
+
       <!-- WIP -->
 
 
+
       <div class="sticky bottom-0 w-full p-6 pb-8">
-        <!-- WIP -->
-        <promptTemplate v-show="isPromptTemplateVisible" :messageList="messageList"
-          @update:messageList="handleMessageListUpdate" @update:hidePromptTemplate="togglePromptTemplateVisibility" />
-        <!-- WIP -->
         <div class="-mt-2 mb-2 text-sm text-gray-500" v-if="isConfig">
           请输入 API Key：
         </div>
@@ -70,6 +86,15 @@
           </button>
         </div>
       </div>
+
+      <!-- WIP -->
+      <promptTemplate v-show="isPromptTemplateVisible" :messageList="messageList"
+        @update:messageList="handleMessageListUpdate" @update:hidePromptTemplate="togglePromptTemplateVisibility" />
+      <!-- WIP -->
+
+
+
+
     </div>
   </div>
 
@@ -98,14 +123,19 @@ const toggleHandWatchVisibility = () => {
   isHandWatchVisible.value = !isHandWatchVisible.value;
 };
 
+// Prompt模板，按钮可见性
 const togglePromptTemplateVisibility = () => {
   isPromptTemplateVisible.value = !isPromptTemplateVisible.value
+  isToolBarVisible.value = false
 }
 
+// 齿轮标签打开的菜单
 const toggleToolBarVisibility = () => {
   isToolBarVisible.value = !isToolBarVisible.value
-  if (isToolBarVisible.value == false) {
-    // addhere
+  // 如果点击齿轮的时候 任何一个其他功能的菜单 已经被打开了
+  // 那么就不打开 额外菜单 关闭所有的额外功能，回到GPT页面
+  let anyMenuIsOn = (isPromptTemplateVisible.value == true)
+  if (anyMenuIsOn) {
     isHandWatchVisible.value = false;
     isPromptTemplateVisible.value = false;
     isToolBarVisible.value = false
@@ -299,7 +329,45 @@ pre {
   justify-content: center;
   align-items: center;
   text-align: center;
-  width: 8%;
-  max-height: 8%;
+  width: 5%;
+  max-width: 25px;
+  max-height: 25px;
+}
+
+.toolBarWrapper {
+  display: flex;
+  justify-content: space-between;
+  padding-left: 25px;
+  height: 5%;
+  max-height: 5%;
+}
+
+.toolBarWrapperLeft {
+  display: flex;
+  justify-content: start;
+}
+
+.toolBarWrapperRight {
+  gap: 5px;
+  padding-right: 25px;
+  display: flex;
+  justify-content: end;
+}
+
+.functionMenuWrapper {
+  padding-left: 25px;
+  padding-bottom: 15px;
+}
+
+.functionMenu {
+  gap: 25px;
+}
+
+.btn {
+  background-color: black;
+}
+
+.functionPromptTemplate {
+  max-width: 150px;
 }
 </style>

@@ -1,19 +1,19 @@
 <template>
-  <div class="wrapper">
+  <div class="wrapper" style="background-color: black;">
 
     <div class="input-container">
       <input class="input" v-model="lastPrompt" :placeholder="placeHolder" />
     </div>
 
     <div class="button-container">
-      <button class="btn" @click="addMessageToList">
+      <button class="btn templateControlButton" @click="addMessageToList">
         设置Prompt
       </button>
-      <button class="btn" @click="saveTemplate">
+      <button class="btn templateControlButton" @click="saveTemplate">
         保存模板
       </button>
-      <button class="btn" @click="toggleTemplateRepository">模板仓库</button>
-      <button class="btn" @click="hideTemplate">返回</button>
+      <button class="btn templateControlButton" @click="toggleTemplateRepository">模板仓库</button>
+      <button class="btn templateControlButton" @click="hideTemplate">返回</button>
     </div>
 
     <div id="resultsContainer" v-show="isRepositoryVisible" class="results-container">
@@ -238,6 +238,7 @@ const hideTemplate = () => {
 
 .input-container,
 .button-container {
+  display: flex;
   margin-bottom: 10px;
 }
 
@@ -249,6 +250,7 @@ const hideTemplate = () => {
 
 .btn {
   margin-right: 10px;
+  background-color: black;
 }
 
 .results-container {
@@ -280,7 +282,6 @@ const hideTemplate = () => {
 @media (max-width: 400px) {
   .button-container {
     display: flex;
-    flex-direction: column;
     gap: 10px;
     margin-top: 10px;
   }
@@ -289,5 +290,10 @@ const hideTemplate = () => {
     width: 100%;
     margin-right: 0;
   }
+}
+
+.templateControlButton {
+  width: 40%;
+  max-width: 1000px;
 }
 </style>

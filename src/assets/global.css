@@ -1,3 +1,7 @@
+main{
+  background-color:black;
+}
+
 
 /* 黑底白字的全局样式 */
 .mainWrapper {
@@ -14,3 +18,4 @@ button {
   border-radius: 5px;
   cursor: pointer; /* 鼠标悬停时显示手型光标 */
 }
+
