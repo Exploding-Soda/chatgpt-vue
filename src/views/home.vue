@@ -55,6 +55,7 @@
       </div>
 
       <div class="toolBarWrapper">
+
         <div class="toolBarWrapperLeft">
           <button class="toolBar" @click="toggleToolBarVisibility">
             {{ isToolBarVisible ? "🚪" : "⚙️" }}
@@ -92,7 +93,7 @@
       <div class="flex" v-if="!isExtendChatboxVisible">
         <input class="input" :type="isConfig ? 'password' : 'text'" :placeholder="isConfig ? 'sk-xxxxxxxxxx' : '请输入'"
           v-model="messageContent" @keydown.enter="isTalking || sendOrSave()" />
-        <button class="" :disabled="isTalking" @click="sendOrSave()">
+        <button class="" style="min-width:150px;" :disabled="isTalking" @click="sendOrSave()">
           {{ isConfig ? "保存" : "发送" }}
         </button>
       </div>
@@ -114,7 +115,7 @@
 
 <script setup lang="ts">
 import type { ChatMessage } from "@/types";
-import { ref, watch, nextTick, onMounted } from "vue";
+import { ref, watch, nextTick, onMounted, onBeforeUnmount } from "vue";
 import { chat } from "@/libs/gpt";
 import cryptoJS from "crypto-js";
 import Loding from "@/components/Loding.vue";
@@ -192,6 +193,62 @@ const messageList = ref<ChatMessage[]>([
     role: "system",
     content: preSetPrompt,
   },
+  {
+    role: "assistant",
+    content: preSetPrompt,
+  },
+  {
+    role: "assistant",
+    content: preSetPrompt,
+  },
+
+  {
+    role: "assistant",
+    content: preSetPrompt,
+  },
+
+  {
+    role: "assistant",
+    content: preSetPrompt,
+  },
+
+  {
+    role: "assistant",
+    content: preSetPrompt,
+  },
+
+  {
+    role: "assistant",
+    content: preSetPrompt,
+  },
+
+  {
+    role: "assistant",
+    content: preSetPrompt,
+  },
+
+  {
+    role: "assistant",
+    content: preSetPrompt,
+  },
+
+  {
+    role: "assistant",
+    content: preSetPrompt,
+  },
+
+  {
+    role: "assistant",
+    content: preSetPrompt,
+  },
+
+  {
+    role: "assistant",
+    content: preSetPrompt,
+  },
+
+
+
 
 ]);
 
@@ -201,6 +258,62 @@ const handleMessageListUpdate = (updatedMessageList: ChatMessage[]) => {
   togglePromptTemplateVisibility();
 };
 
+
+
+const hideToBottomButtonOnScrolledToBottom = () => {
+  // 防抖函数
+  // 防抖函数
+  function debounce<T>(func: (this: T, ...args: any[]) => void, delay: number) {
+    let timeoutId: number | undefined;
+    return function (this: T, ...args: any[]) {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        func.apply(this, args);
+      }, delay);
+    };
+  }
+
+
+
+  // 获取具有类名scrollToBottomWrapper的第一个元素
+  const targetElement = document.querySelector('.scrollToBottomWrapper') as HTMLElement;
+
+  // 检查targetElement是否为null
+  if (targetElement !== null) {
+    // 定义滚动事件处理函数
+    function handleScroll() {
+      // 获取页面滚动的垂直位置
+      const scrollY = window.scrollY;
+
+      // 获取用户的屏幕高度
+      const screenHeight = window.innerHeight;
+
+      // 获取整个文档的高度
+      const documentHeight = document.documentElement.scrollHeight;
+
+      // 计算用户距离底部的距离
+      const distanceFromBottom = documentHeight - screenHeight - scrollY;
+
+      // 如果用户距离底部滚出一个屏幕高度的距离
+      if (distanceFromBottom <= screenHeight) {
+        // 隐藏目标元素
+        targetElement.style.opacity = '0';
+      } else {
+        // 显示目标元素
+        targetElement.style.opacity = '1';
+      }
+    }
+
+    // 使用防抖函数处理滚动事件
+    const debouncedHandleScroll = debounce(handleScroll, 100); // 100 毫秒的延迟
+
+    // 监听滚动事件，使用防抖处理后的函数
+    window.addEventListener('scroll', debouncedHandleScroll);
+  } else {
+    console.log("没有找到底部框");
+  }
+
+};
 
 
 onMounted(() => {
@@ -218,6 +331,10 @@ onMounted(() => {
     isHandWatchVisible.value = true;
   }
   // WIP
+
+  // 监听是否滚动到底部
+  // logOnScrollToBottom();
+  hideToBottomButtonOnScrolledToBottom();
 
 });
 
@@ -342,7 +459,7 @@ const test = () => {
   alert('test')
 }
 
-watch(messageList.value, () => nextTick(() => scrollToBottom()));
+
 </script>
 
 <style scoped>
@@ -363,9 +480,9 @@ pre {
   justify-content: center;
   align-items: center;
   text-align: center;
-  width: 5%;
-  max-width: 25px;
-  max-height: 25px;
+
+  max-width: 75px;
+  max-height: 75px;
 }
 
 .toolBarWrapper {
@@ -433,6 +550,8 @@ body {
   justify-content: center;
   position: sticky;
   top: 0;
+  transition: opacity 0.5s;
+  /* 使用过渡效果 */
 }
 
 

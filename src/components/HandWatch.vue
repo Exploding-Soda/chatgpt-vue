@@ -1,26 +1,171 @@
 <template>
-  <!-- <div class="hand-watch" v-if="isHandWatchVisible"> -->
   <div class="hand-watch" @click="closeWatch">
-
     <div class="watchContent watch-time">
       <span>{{ formattedTime.split(' : ')[0] }}</span>
       <span class="time-separator"> : </span>
       <span>{{ formattedTime.split(' : ')[1] }}</span>
+
     </div>
+    <span class="time-separator"></span>
+    <span class="second">{{ formattedTime.split(' : ')[2] }}</span>
+
     <div class="time-display">
-      <div class="watchContent">{{ formattedDate }} </div>
+      <div class="watchContent">{{ formattedDate }}</div>
       <div class="watchContent">{{ formattedDayOfWeek }}</div>
     </div>
-
-
-
-
     <div class="timezone-selector">
-      <!-- 时区选择器 -->
+      <!-- 时区选择器（如果还需要可以在这里添加） -->
     </div>
   </div>
-
 </template>
+
+
+<!-- 
+<script setup lang="ts">
+import { ref, onMounted, onBeforeUnmount, watch, computed, defineProps, defineEmits } from 'vue';
+
+// WIP
+const isHandWatchVisible = ref(false);
+const emit = defineEmits(['close-watch']);
+defineProps<{ isHandWatchVisible: boolean }>();
+
+function closeWatch() {
+  emit('close-watch');
+}
+// WIP
+
+
+// 时区列表，可根据需要添加或修改
+const timeZones = [
+  'Asia/Shanghai',
+  // 更多时区...
+];
+
+// Timer用于每分钟刷新时间
+const timer = ref<number | null>(null);
+
+
+const selectedTimeZone = ref(localStorage.getItem('selectedTimeZone') || 'Asia/Shanghai'); // 获取上次保存的时区，默认 'Asia/Shanghai'
+const currentDateTime = ref('');
+
+const fetchTime = async (timeZone: string) => {
+  try {
+    const response = await fetch(`https://worldtimeapi.org/api/timezone/${timeZone}`);
+    const data = await response.json();
+    currentDateTime.value = data.datetime;
+  } catch (error) {
+    console.error('获取时间失败：', error);
+  }
+};
+
+const updateTimeZone = () => {
+  localStorage.setItem('selectedTimeZone', selectedTimeZone.value); // 保存选择的时区到 localStorage
+  fetchTime(selectedTimeZone.value); // 更新当前时间
+};
+
+onBeforeUnmount(() => {
+  if (timer.value !== null) {
+    clearInterval(timer.value);
+    timer.value = null;
+  }
+});
+
+
+// 初始化时获取当前时间
+onMounted(() => {
+  fetchTime(selectedTimeZone.value);
+
+  // 在onMounted中设置计时器，每分钟刷新时间
+  timer.value = setInterval(() => {
+    fetchTime(selectedTimeZone.value);
+  }, 60000); // 每分钟（60,000 毫秒）刷新一次时间
+
+});
+
+// 监视时区选择变化
+watch(selectedTimeZone, (newTimeZone) => {
+  fetchTime(newTimeZone);
+});
+
+// 格式化日期时间字符串为规范的日期、时间和星期
+let formattedDate = computed(() => {
+  const date = new Date(currentDateTime.value);
+  const options: Intl.DateTimeFormatOptions = { month: 'long', day: 'numeric' };
+  return date.toLocaleDateString('zh-CN', options);
+});
+
+const formattedTime = computed(() => {
+  const date = new Date(currentDateTime.value);
+  const options: Intl.DateTimeFormatOptions = { hour: '2-digit', minute: '2-digit' };
+  const timeString = date.toLocaleTimeString('zh-CN', options);
+  // 在小时和分钟之间添加两个空格
+  return timeString.replace(':', ' : ');
+});
+
+
+const formattedDayOfWeek = computed(() => {
+  const date = new Date(currentDateTime.value);
+  const options: Intl.DateTimeFormatOptions = { weekday: 'long' };
+  return date.toLocaleDateString('zh-CN', options);
+});
+</script> -->
+
+<script setup lang="ts">
+import { ref, onMounted, onBeforeUnmount, watch, computed, defineProps, defineEmits } from 'vue';
+
+// 组件的属性和事件
+const isHandWatchVisible = ref(false);
+const emit = defineEmits(['close-watch']);
+defineProps<{ isHandWatchVisible: boolean }>();
+
+function closeWatch() {
+  emit('close-watch');
+}
+
+// 用于显示当前的本地时间
+const currentDateTime = ref(new Date());
+
+// 定义每秒更新时间的定时器
+const timer = ref<number | null>(null);
+
+// 初始化时设置计时器，每秒更新时间
+onMounted(() => {
+  timer.value = setInterval(() => {
+    currentDateTime.value = new Date();
+  }, 1000); // 每秒（1000毫秒）更新一次时间
+});
+
+// 在组件卸载前清除定时器
+onBeforeUnmount(() => {
+  if (timer.value !== null) {
+    clearInterval(timer.value);
+    timer.value = null;
+  }
+});
+
+// 计算格式化后的日期
+const formattedDate = computed(() => {
+  const options: Intl.DateTimeFormatOptions = { month: 'long', day: 'numeric' };
+  return currentDateTime.value.toLocaleDateString('zh-CN', options);
+});
+
+// 计算格式化后的时间，包括时、分、秒
+const formattedTime = computed(() => {
+  const options: Intl.DateTimeFormatOptions = { hour: '2-digit', minute: '2-digit', second: '2-digit' };
+  const timeString = currentDateTime.value.toLocaleTimeString('zh-CN', options);
+  // 在时间的各部分之间添加空格
+  return timeString.replace(/:/g, ' : ');
+});
+
+// 计算格式化后的星期
+const formattedDayOfWeek = computed(() => {
+  const options: Intl.DateTimeFormatOptions = { weekday: 'long' };
+  return currentDateTime.value.toLocaleDateString('zh-CN', options);
+});
+</script>
+
+
+
 
 <style scoped>
 /* 全局样式 */
@@ -129,139 +274,11 @@
 .watchContent.watch-time .time-separator {
   animation: blink 1s infinite;
 }
+
+.second {
+  position: relative;
+  bottom: 25px;
+  font-size: xx-large;
+  color: gray;
+}
 </style>
-
-
-
-<!-- <style scoped>
-
-
-.hider{
-  position:absolute;
-  width:100vw;
-  height:100vh;
-}
-
-.hideWatch{
-  position:absolute;
-  height:100vh;
-  width:100vw;
-}
-
-.time-display {
-  border-radius: 50px;
-}
-
-
-.hand-watch {
-  position: absolute;
-  z-index: 10;
-  width: 100vw;
-  height: 100vh;
-  background: linear-gradient(to bottom, rgb(22, 22, 22), rgb(66, 66, 66));
-  animation: breathing 4s infinite ease-in-out; /* 调整动画的持续时间和速度 */
-}
-
-.watchContent{
-  color:white;
-  font-size:5rem;
-  width:100vw;
-}
-
-.watch-time{
-  position:absolute;
-  font-size: 20rem;
-  text-align: right;
-}
-
-</style> -->
-
-
-<script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount, watch, computed, defineProps, defineEmits } from 'vue';
-
-// WIP
-const isHandWatchVisible = ref(false);
-const emit = defineEmits(['close-watch']);
-defineProps<{ isHandWatchVisible: boolean }>();
-
-function closeWatch() {
-  emit('close-watch');
-}
-// WIP
-
-
-// 时区列表，可根据需要添加或修改
-const timeZones = [
-  'Asia/Shanghai',
-  // 更多时区...
-];
-
-// Timer用于每分钟刷新时间
-const timer = ref<number | null>(null);
-
-
-const selectedTimeZone = ref(localStorage.getItem('selectedTimeZone') || 'Asia/Shanghai'); // 获取上次保存的时区，默认 'Asia/Shanghai'
-const currentDateTime = ref('');
-
-const fetchTime = async (timeZone: string) => {
-  try {
-    const response = await fetch(`https://worldtimeapi.org/api/timezone/${timeZone}`);
-    const data = await response.json();
-    currentDateTime.value = data.datetime;
-  } catch (error) {
-    console.error('获取时间失败：', error);
-  }
-};
-
-const updateTimeZone = () => {
-  localStorage.setItem('selectedTimeZone', selectedTimeZone.value); // 保存选择的时区到 localStorage
-  fetchTime(selectedTimeZone.value); // 更新当前时间
-};
-
-onBeforeUnmount(() => {
-  if (timer.value !== null) {
-    clearInterval(timer.value);
-    timer.value = null;
-  }
-});
-
-
-// 初始化时获取当前时间
-onMounted(() => {
-  fetchTime(selectedTimeZone.value);
-
-  // 在onMounted中设置计时器，每分钟刷新时间
-  timer.value = setInterval(() => {
-    fetchTime(selectedTimeZone.value);
-  }, 60000); // 每分钟（60,000 毫秒）刷新一次时间
-
-});
-
-// 监视时区选择变化
-watch(selectedTimeZone, (newTimeZone) => {
-  fetchTime(newTimeZone);
-});
-
-// 格式化日期时间字符串为规范的日期、时间和星期
-let formattedDate = computed(() => {
-  const date = new Date(currentDateTime.value);
-  const options: Intl.DateTimeFormatOptions = { month: 'long', day: 'numeric' };
-  return date.toLocaleDateString('zh-CN', options);
-});
-
-const formattedTime = computed(() => {
-  const date = new Date(currentDateTime.value);
-  const options: Intl.DateTimeFormatOptions = { hour: '2-digit', minute: '2-digit' };
-  const timeString = date.toLocaleTimeString('zh-CN', options);
-  // 在小时和分钟之间添加两个空格
-  return timeString.replace(':', ' : ');
-});
-
-
-const formattedDayOfWeek = computed(() => {
-  const date = new Date(currentDateTime.value);
-  const options: Intl.DateTimeFormatOptions = { weekday: 'long' };
-  return date.toLocaleDateString('zh-CN', options);
-});
-</script>
