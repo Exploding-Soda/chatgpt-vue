@@ -24,8 +24,7 @@
           <div class="button-group">
             <button @click="usePrompt(prompt.content)" class="btn">使用</button>
             <!-- 有标题，而且没找到我不希望删的标题 -->
-            <button @click="deletePrompt(prompt)" class="btn"
-              v-show="prompt.title && prompt.title.indexOf('简短回复') === -1">删除</button>
+            <button @click="deletePrompt(prompt.id)" class="btn" v-show="!prompt.isPredefined">删除</button>
 
           </div>
         </div>
@@ -36,20 +35,21 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, reactive } from 'vue';
+import { ref, onMounted } from 'vue';
 import type { ChatMessage } from '@/types';
-import { Perspective } from '@icon-park/vue-next';
+import { defineProps, defineEmits } from 'vue';
+import { presetPrompts } from '@/components/PresetPrompts.js'; // 从 PresetPrompts.js 导入 presetPrompts
 
 // 定义属性和事件
 const props = defineProps<{ messageList: ChatMessage[] }>();
 const emit = defineEmits(['update:messageList', 'update:hidePromptTemplate']);
 
 // 定义 reactive 状态
-let placeHolder = ref('输入Prompt，这将决定GPT在之后对话的个性');
-let lastPrompt = ref('');
-let isRepositoryVisible = ref(false);
-let prompts = ref<ChatMessage[]>([]);
-let protectedPresets = ref([])
+const placeHolder = ref('输入Prompt，这将决定GPT在之后对话的个性');
+const lastPrompt = ref('');
+const isRepositoryVisible = ref(false);
+const prompts = ref<Array<{ id: number; title: string; content: string; isPredefined: boolean }>>(presetPrompts);
+const protectedPresets = ref([]);
 
 // 初始化 IndexedDB
 const openDB = async () => {
@@ -58,44 +58,72 @@ const openDB = async () => {
     request.onupgradeneeded = () => {
       const db = request.result;
       if (!db.objectStoreNames.contains('PromptList')) {
-        db.createObjectStore('PromptList', { autoIncrement: true });
+        db.createObjectStore('PromptList', { keyPath: 'id', autoIncrement: true });
       }
     };
-    request.onsuccess = (event) => resolve(request.result);
+    request.onsuccess = () => resolve(request.result);
     request.onerror = (event) => reject(event);
   });
 };
 
-// 从数据库加载 Prompts
-const loadPrompts = async () => {
+// 从数据库加载用户自己保存的 Prompts
+const loadUserPrompts = async () => {
   const db: IDBDatabase = await openDB();
   const tx = db.transaction('PromptList', 'readonly');
   const store = tx.objectStore('PromptList');
-  const prompts: ChatMessage[] = [];
+  const userPrompts: Array<{ id: number; title: string; content: string; isPredefined: boolean }> = [];
 
   return new Promise((resolve, reject) => {
     const cursorRequest = store.openCursor();
-    cursorRequest.onsuccess = (event: IDBRequestEvent) => {
-      const cursor = (event.target as IDBRequest<ChatMessage>).result as IDBCursor<ChatMessage>;
-
+    cursorRequest.onsuccess = (event) => {
+      const cursor = (event.target as IDBRequest).result as IDBCursor;
       if (cursor) {
-        prompts.push(cursor.value);
+        const value = cursor.value;
+        userPrompts.push({ id: cursor.key as number, title: value.title, content: value.content, isPredefined: value.isPredefined });
         cursor.continue();
       } else {
-        resolve(prompts);
+        resolve(userPrompts);
       }
     };
-
-    cursorRequest.onerror = (event: IDBRequestEvent) => {
-      console.error('Error loading prompts:', event);
+    cursorRequest.onerror = (event) => {
+      console.error('Error loading user prompts:', event);
       reject(event);
     };
-
   });
 };
 
+// 合并预定义的 prompts 和用户保存的 prompts
+const mergePrompts = (presetPrompts: Array<{ id: number; title: string; content: string; isPredefined: boolean }>, userPrompts: Array<{ id: number; title: string; content: string; isPredefined: boolean }>) => {
+  const mergedPrompts = [...presetPrompts];
+
+  // 使用 Map 通过 title 和 content 过滤重复的 prompts
+  const promptMap = new Map<string, { id: number; title: string; content: string; isPredefined: boolean }>();
+  mergedPrompts.forEach(prompt => {
+    const key = `${prompt.title}-${prompt.content}`;
+    promptMap.set(key, prompt);
+  });
+
+  userPrompts.forEach(prompt => {
+    const key = `${prompt.title}-${prompt.content}`;
+    if (!promptMap.has(key)) {
+      promptMap.set(key, prompt);
+    }
+  });
+
+  return Array.from(promptMap.values());
+};
+
+// 刷新 prompts 列表
+const refreshPrompts = async () => {
+  // 从 IndexedDB 中加载用户自己保存的 prompts
+  const userPromptsList = await loadUserPrompts();
+
+  // 合并预定义的 prompts 和用户保存的 prompts
+  prompts.value = mergePrompts(presetPrompts, userPromptsList);
+};
+
 // 添加新的 Prompt 到数据库
-const addPrompt = async (prompt) => {
+const addPrompt = async (prompt: { title: string; content: string; isPredefined: boolean }) => {
   const db: IDBDatabase = await openDB();
   const tx = db.transaction('PromptList', 'readwrite');
   const store = tx.objectStore('PromptList');
@@ -103,63 +131,21 @@ const addPrompt = async (prompt) => {
   await store.add(prompt);
   await tx.done;
 
-  // 完成后刷新 Prompts 列表
+  // 完成后刷新 prompts 列表
   refreshPrompts();
 };
 
 // 删除指定的 Prompt
-const deletePrompt = async (prompt) => {
-  const db = await openDB();
+const deletePrompt = async (id: number) => {
+  const db: IDBDatabase = await openDB();
   const tx = db.transaction('PromptList', 'readwrite');
   const store = tx.objectStore('PromptList');
 
-  const key = await findPromptKey(store, prompt);
-  if (key !== null) {
-    await store.delete(key);
-  }
-
+  await store.delete(id);
   await tx.done;
 
-  // 删除后刷新 Prompts 列表
+  // 删除后刷新 prompts 列表
   refreshPrompts();
-};
-
-// 查找 Prompt 的键
-const findPromptKey = async (store: IDBObjectStore, prompt: ChatMessage) => {
-  return new Promise((resolve, reject) => {
-    const cursorRequest = store.openCursor();
-
-    cursorRequest.onsuccess = (event: IDBRequestEvent) => {
-      const cursor = event.target.result;
-
-      if (cursor) {
-        const currentPrompt = cursor.value;
-
-        // 比较当前游标中的 Prompt 和给定的 Prompt
-        if (currentPrompt.content === prompt.content && currentPrompt.title === prompt.title) {
-          // 找到匹配的 Prompt，返回键
-          resolve(cursor.key);
-          cursor.continue(); // 继续遍历
-        } else {
-          cursor.continue(); // 继续遍历
-        }
-      } else {
-        // 没有更多的游标记录
-        resolve(null);
-      }
-    };
-
-    cursorRequest.onerror = (event) => {
-      console.error('Error finding prompt key:', event);
-      reject(event);
-    };
-  });
-};
-
-
-// 刷新 Prompts 列表
-const refreshPrompts = async () => {
-  prompts.value = await loadPrompts();
 };
 
 // 保存 Prompt
@@ -169,6 +155,7 @@ const saveTemplate = async () => {
     const prompt = {
       title: promptTitle,
       content: lastPrompt.value,
+      isPredefined: false
     };
 
     await addPrompt(prompt);
@@ -209,38 +196,33 @@ const addMessageToList = () => {
       content: lastPrompt.value.trim(),
     };
 
-
     const updatedMessageList = [newChatMessage, ...props.messageList];
     const filteredMessageList = updatedMessageList.filter(
       (message, index) => message.role !== 'system' || index === 0
     );
 
     emit('update:messageList', filteredMessageList);
-
-
     placeHolder.value = lastPrompt.value;
     lastPrompt.value = '';
   }
 };
 
-const test = () => {
-  alert('test')
-}
-
+// 隐藏模板仓库
 const hideTemplate = () => {
   emit('update:hidePromptTemplate');
-}
+};
 
-// onMounted(async () => {
-//   // 调用 refreshPrompts 加载 prompts 列表
-//   await refreshPrompts();
+onMounted(async () => {
+  // 加载并合并预定义的 prompts 和用户保存的 prompts
+  await refreshPrompts();
 
-//   // 打印 prompts 列表
-//   console.log(prompts.value);
-// });
-
-
+  // 打印 prompts 列表
+  console.log(prompts.value);
+});
 </script>
+
+
+
 
 <style scoped>
 .wrapper {

@@ -32,7 +32,7 @@
         <div class="group flex flex-col px-4 py-3 hover:bg-gray-800 rounded-lg"
           v-for="item of messageList.filter((v) => v.role !== 'system')">
           <div class="flex justify-between items-center mb-2">
-            <div class="font-bold">{{ roleAlias[item.role] }}：</div>
+            <div class="font-bold">{{ roleAlias[item.role] }}.</div>
             <Copy class="invisible group-hover:visible" :content="item.content" />
           </div>
           <div>
@@ -190,7 +190,7 @@ let isTalking = ref(false);
 let messageContent = ref("");
 const chatListDom = ref<HTMLDivElement>();
 const decoder = new TextDecoder("utf-8");
-const roleAlias = { user: "ME", assistant: "ChatGPT", system: "System" };
+const roleAlias = { user: "==========", assistant: "==========", system: "System" };
 const preSetPrompt = '请尽可能在一句话内回答用户的问题。'
 const messageList = ref<ChatMessage[]>([
   {
