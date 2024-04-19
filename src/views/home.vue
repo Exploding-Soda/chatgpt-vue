@@ -193,63 +193,6 @@ const messageList = ref<ChatMessage[]>([
     role: "system",
     content: preSetPrompt,
   },
-  {
-    role: "assistant",
-    content: preSetPrompt,
-  },
-  {
-    role: "assistant",
-    content: preSetPrompt,
-  },
-
-  {
-    role: "assistant",
-    content: preSetPrompt,
-  },
-
-  {
-    role: "assistant",
-    content: preSetPrompt,
-  },
-
-  {
-    role: "assistant",
-    content: preSetPrompt,
-  },
-
-  {
-    role: "assistant",
-    content: preSetPrompt,
-  },
-
-  {
-    role: "assistant",
-    content: preSetPrompt,
-  },
-
-  {
-    role: "assistant",
-    content: preSetPrompt,
-  },
-
-  {
-    role: "assistant",
-    content: preSetPrompt,
-  },
-
-  {
-    role: "assistant",
-    content: preSetPrompt,
-  },
-
-  {
-    role: "assistant",
-    content: preSetPrompt,
-  },
-
-
-
-
 ]);
 
 const handleMessageListUpdate = (updatedMessageList: ChatMessage[]) => {
