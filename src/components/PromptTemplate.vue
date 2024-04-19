@@ -36,7 +36,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, reactive } from 'vue';
 import type { ChatMessage } from '@/types';
 import { Perspective } from '@icon-park/vue-next';
 
@@ -49,6 +49,7 @@ let placeHolder = ref('输入Prompt，这将决定GPT在之后对话的个性');
 let lastPrompt = ref('');
 let isRepositoryVisible = ref(false);
 let prompts = ref<ChatMessage[]>([]);
+let protectedPresets = ref([])
 
 // 初始化 IndexedDB
 const openDB = async () => {
@@ -229,6 +230,16 @@ const test = () => {
 const hideTemplate = () => {
   emit('update:hidePromptTemplate');
 }
+
+// onMounted(async () => {
+//   // 调用 refreshPrompts 加载 prompts 列表
+//   await refreshPrompts();
+
+//   // 打印 prompts 列表
+//   console.log(prompts.value);
+// });
+
+
 </script>
 
 <style scoped>
@@ -295,5 +306,21 @@ const hideTemplate = () => {
 .templateControlButton {
   width: 25%;
   max-width: 1000px;
+}
+
+.prompt-content p {
+  white-space: nowrap;
+  /* 将文本限制在一行内 */
+  overflow: hidden;
+  /* 隐藏溢出的文本 */
+  text-overflow: ellipsis;
+  /* 添加省略号 */
+}
+
+.prompt-content p:hover {
+  white-space: normal;
+  /* 在悬停时取消单行限制 */
+  overflow: visible;
+  /* 允许溢出文本可见 */
 }
 </style>
