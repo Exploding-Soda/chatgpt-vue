@@ -151,6 +151,7 @@ const toggleToolBarVisibility = () => {
   // 如果点击齿轮的时候 任何一个其他功能的菜单 已经被打开了
   // 那么就不打开 额外菜单 关闭所有的额外功能，回到GPT页面
   let anyMenuIsOn = (isPromptTemplateVisible.value == true)
+
   if (anyMenuIsOn) {
     isHandWatchVisible.value = false;
     isPromptTemplateVisible.value = false;
@@ -175,6 +176,9 @@ const toggleExtendedChatbox = () => {
   setTimeout(() => {
     scrollToBottom();
   }, 20);
+
+  // 再关闭所有已经打开的工具栏
+  toggleToolBarVisibility();
 }
 
 
