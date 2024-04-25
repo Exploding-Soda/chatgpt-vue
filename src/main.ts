@@ -8,4 +8,9 @@ import "./assets/global.css"
 
 const app = createApp(App);
 
+app.config.compilerOptions.isCustomElement = (tag) => {
+  console.log("Checking tag:", tag); // This will log if the check is actually being performed
+  return tag === 'close-one';
+};
+
 app.use(router).mount("#app");

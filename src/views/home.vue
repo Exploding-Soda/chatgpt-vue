@@ -1,6 +1,5 @@
 <template>
   <div class="mainWrapper">
-
     <!-- WIP -->
     <div>
       <handWatch v-if="isHandWatchVisible" @close-watch="closeWatch" />
@@ -9,108 +8,132 @@
     <div class="backgroundWrapper">
 
 
-      <div class="flex flex-nowrap w-full items-baseline top-0 px-6 py-4">
-        <div class="text-2xl font-bold">ChatGPT</div>
-        <div class="ml-4 text-sm">
-          OpenAI 的 ChatGPT
-        </div>
-        <div class="ml-auto px-3 py-2 text-sm cursor-pointer hover:bg-white rounded-md" @click="clickConfig()">
-          🛠️
-        </div>
-      </div>
-
-      <!-- 滚动到底部 -->
-      <div class='scrollToBottomWrapper'>
-        <span>
-          <button @click="scrollToBottom">
-            <p class="btn noMarginRight scrollToBottom">底部</p>
-          </button>
-        </span>
-      </div>
 
       <div class="chatArea" style="background-color: black;" ref="chatListDom">
-        <div class="group flex flex-col px-4 py-3 hover:bg-gray-800 rounded-lg"
-          v-for="item of messageList.filter((v) => v.role !== 'system')">
-          <div class="flex justify-between items-center mb-2">
-            <div class="font-bold">{{ roleAlias[item.role] }}.</div>
-            <Copy class="invisible group-hover:visible" :content="item.content" />
+        <!-- GPT标题 -->
+        <div class="flex flex-nowrap w-full items-baseline top-0 px-6 py-4">
+          <div class="text-2xl font-bold">ChatGPT</div>
+          <div class="ml-4 text-sm">
+            OpenAI 的 ChatGPT
           </div>
-          <div>
-            <div v-if="item.content" v-html="md.render(item.content)"></div>
-            <Loding v-else />
+          <div class="ml-auto px-3 py-2 text-sm cursor-pointer hover:bg-white rounded-md" @click="clickConfig()">
+            🛠️
           </div>
         </div>
-      </div>
 
-
-    </div>
-
-    <div class="chatboxArea" style="background-color:black">
-      <div v-show="isToolBarVisible">
-        <span class="functionMenu">
-          <button @click="togglePromptTemplateVisibility">
-            <p class="btn noMarginRight functionPromptTemplate">Prompt模板</p>
-          </button>
-        </span>
-      </div>
-
-      <div class="toolBarWrapper">
-
-        <div class="toolBarWrapperLeft">
-          <button class="toolBar" @click="toggleToolBarVisibility">
-            {{ isToolBarVisible ? "🚪" : "⚙️" }}
-          </button>
+        <!-- 滚动到底部 -->
+        <div class='scrollToBottomWrapper'>
+          <span>
+            <button @click="scrollToBottom">
+              <p class="btn noMarginRight scrollToBottom">底部</p>
+            </button>
+          </span>
         </div>
 
-        <!-- <div class="SpeechRecognition"> -->
-        <!-- SpeechRecognition 语音&声音识别 -->
-        <!-- <SpeechRecognition @update-message="updateMessageContent" /> -->
-        <!-- </div> -->
 
-        <div class="toolBarWrapperRight" @click="toggleHandWatchVisibility">
-          <button class="toolBar">
-            🕰️
-          </button>
-          <!-- 后续添加更多按钮按照这个模板 -->
-          <!-- <button class="toolBar" @click="toggleAutoSwitchHandWatch">
+
+        <div class="chatContentRecord">
+          <!-- 聊天记录区域 -->
+          <div class="group flex flex-col px-4 py-3 hover:bg-gray-800 rounded-lg"
+            v-for="item of messageList.filter((v) => v.role !== 'system')">
+            <div class="flex justify-between items-center mb-2">
+              <div class="font-bold">{{ roleAlias[item.role] }}.</div>
+              <Copy class="invisible group-hover:visible" :content="item.content" />
+            </div>
+            <div>
+              <div v-if="item.content" v-html="md.render(item.content)"></div>
+              <Loding v-else />
+            </div>
+          </div>
+
+          <!-- 填充一项以免被工具栏挡住 -->
+          <div style="height:200px;"></div>
+
+        </div>
+
+        <div class="chatboxArea" style="background-color:black">
+          <div v-show="isToolBarVisible">
+            <span class="functionMenu">
+              <button @click="togglePromptTemplateVisibility(0)">
+                <p class="btn noMarginRight functionPromptTemplate">Prompt模板</p>
+              </button>
+            </span>
+          </div>
+
+          <div class="toolBarWrapper">
+
+            <div class="toolBarWrapperLeft">
+              <button class="toolBar" @click="toggleToolBarVisibility()">
+                {{ isToolBarVisible ? "🚪" : "⚙️" }}
+              </button>
+            </div>
+
+            <!-- <div class="SpeechRecognition"> -->
+            <!-- SpeechRecognition 语音&声音识别 -->
+            <!-- <SpeechRecognition @update-message="updateMessageContent" /> -->
+            <!-- </div> -->
+
+            <div class="toolBarWrapperRight">
+
+              <!-- 后续添加更多按钮按照这个模板 -->
+              <!-- <button class="toolBar" @click="toggleAutoSwitchHandWatch">
             🕰️
           </button> -->
+
+              <button class="toolBar" @click="setMemoryLength">
+                🕰️<br>记忆
+              </button>
+
+              <button class="toolBar" @click="clearConversation">
+                💭<br>刷新
+              </button>
+
+              <button class="toolBar" @click="togglePromptTemplateVisibility(1)">
+                📋<br>模板
+              </button>
+
+              <button class="toolBar" @click="toggleHandWatchVisibility">
+                🕰️<br>手表
+              </button>
+
+            </div>
+          </div>
+
+          <!-- 更长输入框模块 -->
+          <div @click="toggleExtendedChatbox"
+            style="max-height:20px;text-align: center;position:relative;padding-bottom:25px">{{ isExtendChatboxVisible ?
+              '▲' : '▼' }}</div>
+          <div v-if="isExtendChatboxVisible"
+            style="height:100%;width:100%;word-wrap: break-word;white-space: normal;display:flex;">
+            <textarea class="input" style="width:90%;min-height:200px;color:black" v-model="messageContent"></textarea>
+            <button class="" style="min-width:100px;width:10%" :disabled="isTalking" @click="sendOrSave()">
+              {{ isConfig ? "保存" : "发送" }}
+            </button>
+          </div>
+          <!-- 更长输入框模块 -->
+
+          <div class="-mt-2 mb-2 text-sm text-gray-500" v-if="isConfig">
+            请输入 API Key：
+          </div>
+          <div class="flex" v-if="!isExtendChatboxVisible">
+            <input class="input" :type="isConfig ? 'password' : 'text'"
+              :placeholder="isConfig ? 'sk-xxxxxxxxxx' : '请输入'" v-model="messageContent"
+              @keydown.enter="isTalking || sendOrSave()" />
+            <button class="" style="min-width:150px;" :disabled="isTalking" @click="sendOrSave()">
+              {{ isConfig ? "保存" : "发送" }}
+            </button>
+          </div>
+
+          <div style="height:5px;"></div>
+          <!-- PromptTemplate提示词模块 -->
+          <promptTemplate v-if="isPromptTemplateVisible" :messageList="messageList"
+            @update:messageList="handleMessageListUpdate"
+            @update:hidePromptTemplate="togglePromptTemplateVisibility(0)" />
+          <!-- PromptTemplate提示词模块 -->
         </div>
       </div>
-
-      <!-- 更长输入框模块 -->
-      <div @click="toggleExtendedChatbox"
-        style="max-height:20px;text-align: center;position:relative;padding-bottom:25px">{{ isExtendChatboxVisible ?
-          '▲' : '▼' }}</div>
-      <div v-if="isExtendChatboxVisible" style="height:100%;width:100%;word-wrap: break-word;white-space: normal;">
-        <textarea class="input" style="width:100%;min-height:200px;color:black" v-model="messageContent"></textarea>
-      </div>
-      <!-- 更长输入框模块 -->
-
-      <div class="-mt-2 mb-2 text-sm text-gray-500" v-if="isConfig">
-        请输入 API Key：
-      </div>
-      <div class="flex" v-if="!isExtendChatboxVisible">
-        <input class="input" :type="isConfig ? 'password' : 'text'" :placeholder="isConfig ? 'sk-xxxxxxxxxx' : '请输入'"
-          v-model="messageContent" @keydown.enter="isTalking || sendOrSave()" />
-        <button class="" style="min-width:150px;" :disabled="isTalking" @click="sendOrSave()">
-          {{ isConfig ? "保存" : "发送" }}
-        </button>
-      </div>
-
-      <div style="height:5px;"></div>
-      <!-- PromptTemplate提示词模块 -->
-      <promptTemplate v-if="isPromptTemplateVisible" :messageList="messageList"
-        @update:messageList="handleMessageListUpdate" @update:hidePromptTemplate="togglePromptTemplateVisibility" />
-      <!-- PromptTemplate提示词模块 -->
-
-
-
     </div>
-
   </div>
-
-
 </template>
 
 <script setup lang="ts">
@@ -138,15 +161,56 @@ const toggleHandWatchVisibility = () => {
 };
 
 // Prompt模板，按钮可见性
-const togglePromptTemplateVisibility = () => {
-  isPromptTemplateVisible.value = !isPromptTemplateVisible.value
-  isToolBarVisible.value = false
+const togglePromptTemplateVisibility = (operand: number) => {
+  if (operand == 0) {
+    // 代表是从工具菜单里点进来的，会在打开模板菜单后关闭工具菜单
+    isPromptTemplateVisible.value = !isPromptTemplateVisible.value
+    isToolBarVisible.value = false
+  }
+  if (operand == 1) {
+    // 代表常规切换模板菜单可见性
+    isPromptTemplateVisible.value = !isPromptTemplateVisible.value
+  }
 
   scrollToBottom();
 }
 
+
+// 清空对话
+const clearConversation = () => {
+  if (templateFromPromptTemplate.length != 0) {
+    // 用户自定义了Prompt的情况
+    messageList.value = [];
+    messageList.value[0] = templateFromPromptTemplate[0];
+  } else {
+    // 用户没自定义Prompt的情况
+    messageList.value = [];
+    messageList.value[0] = defaultPrompt[0];
+  }
+  alert('已清除记忆')
+}
+
+const setMemoryLength = () => {
+  let memoryLength = prompt('指定助手的记忆长度为几条信息：')
+  if (memoryLength != null) {
+    let intMemoryLength: number = parseInt(memoryLength)
+    if (!isNaN(intMemoryLength)) {
+      maxChatLength = intMemoryLength;
+      console.log("助手记忆长度：", maxChatLength)
+    } else {
+      console.log("助手记忆长度：", maxChatLength)
+    }
+  }
+}
+
+
 // 齿轮标签打开的菜单
-const toggleToolBarVisibility = () => {
+const toggleToolBarVisibility = (designitedTrueOrFalse?: number) => {
+  // designitedTrueOrFalse = 0 只执行关闭菜单栏
+  if (designitedTrueOrFalse == 0) {
+    isToolBarVisible.value = false;
+    return 1;
+  }
   isToolBarVisible.value = !isToolBarVisible.value
   // 如果点击齿轮的时候 任何一个其他功能的菜单 已经被打开了
   // 那么就不打开 额外菜单 关闭所有的额外功能，回到GPT页面
@@ -178,7 +242,7 @@ const toggleExtendedChatbox = () => {
   }, 20);
 
   // 再关闭所有已经打开的工具栏
-  toggleToolBarVisibility();
+  toggleToolBarVisibility(0);
 }
 
 
@@ -188,21 +252,40 @@ let apiKey = "";
 let isConfig = ref(true);
 let isTalking = ref(false);
 let messageContent = ref("");
+let maxChatLength = 6;
 const chatListDom = ref<HTMLDivElement>();
 const decoder = new TextDecoder("utf-8");
-const roleAlias = { user: "==========", assistant: "==========", system: "System" };
+const roleAlias = { user: "我", assistant: "助手", system: "System" };
 const preSetPrompt = '请尽可能在一句话内回答用户的问题。'
-const messageList = ref<ChatMessage[]>([
+const defaultPrompt = <ChatMessage[]>[
   {
     role: "system",
     content: preSetPrompt,
   },
-]);
+]
+const messageList = ref<ChatMessage[]>(defaultPrompt);
+let templateFromPromptTemplate = <ChatMessage[]>[];
+// 更新templateFromPromptTemplate，这个变量一开始为空
+// 用户输入过Prompt之后就会把整个对话保存进去
+// 如果需要清空对话并保存Prompt的话清空 templateFromPromptTemplate.value[0] 之后的所有项目
+// 然后把这个变量的值给messageList.value
 
+
+// 这个是在用户编辑了prompt模板并保存之后调用的
 const handleMessageListUpdate = (updatedMessageList: ChatMessage[]) => {
+  // 判断对话历史有没有过长
+  // if (updatedMessageList.length > maxChatLength) {
+  //   updatedMessageList.splice(1, 1);
+  // }
+
   // 更新 messageList
   messageList.value = updatedMessageList;
-  togglePromptTemplateVisibility();
+
+  // 更新templateFromPromptTemplate，这个变量一开始为空，现在用来保存用户输入的prompt
+  templateFromPromptTemplate = updatedMessageList
+
+  togglePromptTemplateVisibility(0);
+
 };
 
 
@@ -239,7 +322,7 @@ const hideToBottomButtonOnScrolledToBottom = () => {
       const documentHeight = document.documentElement.scrollHeight;
 
       // 计算用户距离底部的距离
-      const distanceFromBottom = documentHeight - screenHeight - scrollY;
+      const distanceFromBottom = documentHeight - screenHeight - (scrollY - (screenHeight));
 
       // 如果用户距离底部滚出一个屏幕高度的距离
       if (distanceFromBottom <= screenHeight) {
@@ -299,6 +382,10 @@ const sendChatMessage = async (content: string = messageContent.value) => {
     if (body) {
       const reader = body.getReader();
       await readStream(reader, status);
+    }
+
+    if (messageList.value.length > maxChatLength) {
+      messageList.value.splice(1, 1);
     }
   } catch (error: any) {
     appendLastMessageContent(error);
@@ -399,7 +486,7 @@ const clearMessageContent = () => (messageContent.value = "");
 
 const scrollToBottom = () => {
   if (!chatListDom.value) return;
-  scrollTo(0, chatListDom.value.scrollHeight + 15000);
+  scrollTo(0, chatListDom.value.scrollHeight);
 };
 
 const test = () => {
@@ -418,6 +505,31 @@ pre {
     SimHei, "WenQuanYi Zen Hei Sharp", sans-serif;
 }
 
+
+.backgroundWrapper {
+  /* 这里确定高度，下面的元素即可使用% */
+  min-height: 100vh;
+  background-color: black;
+}
+
+.chatArea {
+  position: relative;
+  min-height: 100vh;
+  height: 100%;
+}
+
+.mainWrapper {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  min-height: 100vh;
+  width: 100%;
+}
+
+.chatContentRecord {
+  min-height: 20%;
+}
+
 .noMarginRight {
   margin-right: 0;
 }
@@ -427,6 +539,9 @@ pre {
   justify-content: center;
   align-items: center;
   text-align: center;
+
+  height: 60px;
+  width: 60px;
 
   max-width: 75px;
   max-height: 75px;
@@ -504,19 +619,16 @@ body {
 
 
 
-/* 这个和下面的chatboxArea一起占用整个屏幕90vh+10vh（高）确保响应式 */
-.backgroundWrapper {
-  min-height: 90vh;
-  background-color: black;
-}
 
 .chatboxArea {
   /* 不能加absolute */
+  position: absolute;
+  bottom: 0;
+
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
 
-  min-height: 10vh;
   width: 100%;
   padding-left: 10px;
   padding-right: 10px;

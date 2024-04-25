@@ -215,9 +215,6 @@ const hideTemplate = () => {
 onMounted(async () => {
   // 加载并合并预定义的 prompts 和用户保存的 prompts
   await refreshPrompts();
-
-  // 打印 prompts 列表
-  console.log(prompts.value);
 });
 </script>
 
