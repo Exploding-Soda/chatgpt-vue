@@ -1,36 +1,23 @@
 <template>
-  <div class="hand-watch" @click="closeWatch">
+
+  <div class="tinyWatchMainWrapper">
     <div class="watchContent watch-time">
       <span>{{ formattedTime.split(' : ')[0] }}</span>
       <span class="time-separator"> : </span>
       <span>{{ formattedTime.split(' : ')[1] }}</span>
 
-    </div>
-    <span class="time-separator"></span>
-    <span class="second">{{ formattedTime.split(' : ')[2] }}</span>
+      <span class="time-separator"></span>
+      <span class="second">{{ formattedTime.split(' : ')[2] }}</span>
 
-    <div class="time-display">
-      <div class="watchContent">{{ formattedDate }}</div>
-      <div class="watchContent">{{ formattedDayOfWeek }}</div>
     </div>
-    <div class="timezone-selector">
-      <!-- 时区选择器（如果还需要可以在这里添加） -->
-    </div>
+
+
   </div>
-</template>
 
+</template>
 
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount, watch, computed, defineProps, defineEmits } from 'vue';
-
-// 组件的属性和事件
-const isHandWatchVisible = ref(false);
-const emit = defineEmits(['close-watch']);
-defineProps<{ isHandWatchVisible: boolean }>();
-
-function closeWatch() {
-  emit('close-watch');
-}
 
 // 用于显示当前的本地时间
 const currentDateTime = ref(new Date());
@@ -53,12 +40,6 @@ onBeforeUnmount(() => {
   }
 });
 
-// 计算格式化后的日期
-const formattedDate = computed(() => {
-  const options: Intl.DateTimeFormatOptions = { month: 'long', day: 'numeric' };
-  return currentDateTime.value.toLocaleDateString('zh-CN', options);
-});
-
 // 计算格式化后的时间，包括时、分、秒
 const formattedTime = computed(() => {
   const options: Intl.DateTimeFormatOptions = { hour: '2-digit', minute: '2-digit', second: '2-digit' };
@@ -67,52 +48,10 @@ const formattedTime = computed(() => {
   return timeString.replace(/:/g, ' : ');
 });
 
-// 计算格式化后的星期
-const formattedDayOfWeek = computed(() => {
-  const options: Intl.DateTimeFormatOptions = { weekday: 'long' };
-  return currentDateTime.value.toLocaleDateString('zh-CN', options);
-});
 </script>
 
 
-
-
 <style scoped>
-/* 全局样式 */
-.hand-watch {
-
-  position: fixed;
-  z-index: 10;
-  width: 100vw;
-  height: 100vh;
-  background: black;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  text-align: center;
-  animation: breathing 5s infinite ease-in-out;
-  /* 调整动画的持续时间和速度 */
-}
-
-/* 动画定义 */
-@keyframes breathing {
-  0% {
-    background: black;
-    /* 初始状态是黑色 */
-  }
-
-  50% {
-    background: rgb(41, 41, 41);
-    /* 中间状态是灰色 */
-  }
-
-  100% {
-    background: black;
-    /* 最终状态是黑色 */
-  }
-}
-
 /* 大的时间显示样式 */
 .watchContent.watch-time {
   font-size: 5rem;
@@ -187,8 +126,16 @@ const formattedDayOfWeek = computed(() => {
 
 .second {
   position: relative;
-  bottom: 25px;
+  margin-left: 20px;
+  bottom: 0px;
+  right: 0px;
   font-size: xx-large;
   color: gray;
+}
+
+.tinyWatchMainWrapper {
+  display: flex;
+  justify-content: center;
+
 }
 </style>

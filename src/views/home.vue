@@ -1,17 +1,16 @@
 <template>
   <div class="mainWrapper">
     <!-- WIP -->
+
     <div>
       <handWatch v-if="isHandWatchVisible" @close-watch="closeWatch" />
     </div>
     <!-- WIP -->
     <div class="backgroundWrapper">
 
-
-
       <div class="chatArea" style="background-color: black;" ref="chatListDom">
-        <!-- GPT标题 -->
-        <div class="flex flex-nowrap w-full items-baseline top-0 px-6 py-4">
+        <!-- GPT标题  -->
+        <div class="flex flex-nowrap w-full items-baseline top-0 px-6 py-4" id="gptHeader">
           <div class="text-2xl font-bold">ChatGPT</div>
           <div class="ml-4 text-sm">
             OpenAI 的 ChatGPT
@@ -30,8 +29,6 @@
           </span>
         </div>
 
-
-
         <div class="chatContentRecord">
           <!-- 聊天记录区域 -->
           <div class="group flex flex-col px-4 py-3 hover:bg-gray-800 rounded-lg"
@@ -45,10 +42,8 @@
               <Loding v-else />
             </div>
           </div>
-
           <!-- 填充一项以免被工具栏挡住 -->
           <div style="height:200px;"></div>
-
         </div>
 
         <div class="chatboxArea" style="background-color:black">
@@ -60,8 +55,11 @@
             </span>
           </div>
 
-          <div class="toolBarWrapper">
+          <div class="TinyWatchClass" v-if="true">
+            <TinyWatch v-show="!isHandWatchVisible"></TinyWatch>
+          </div>
 
+          <div class="toolBarWrapper">
             <div class="toolBarWrapperLeft">
               <button class="toolBar" @click="toggleToolBarVisibility()">
                 {{ isToolBarVisible ? "🚪" : "⚙️" }}
@@ -84,12 +82,12 @@
                 🕰️<br>记忆
               </button>
 
-              <button class="toolBar" @click="clearConversation">
-                💭<br>刷新
-              </button>
-
               <button class="toolBar" @click="togglePromptTemplateVisibility(1)">
                 📋<br>模板
+              </button>
+
+              <button class="toolBar" @click="clearConversation">
+                💭<br>刷新
               </button>
 
               <button class="toolBar" @click="toggleHandWatchVisibility">
@@ -144,6 +142,8 @@ import cryptoJS from "crypto-js";
 import Loding from "@/components/Loding.vue";
 import Copy from "@/components/Copy.vue";
 import { md } from "@/libs/markdown";
+import TinyWatch from "@/components/TinyWatch.vue";
+
 // WIP
 import PromptTemplate from '@/components/PromptTemplate.vue';
 import HandWatch from "@/components/HandWatch.vue";
@@ -175,7 +175,6 @@ const togglePromptTemplateVisibility = (operand: number) => {
   scrollToBottom();
 }
 
-
 // 清空对话
 const clearConversation = () => {
   if (templateFromPromptTemplate.length != 0) {
@@ -190,6 +189,7 @@ const clearConversation = () => {
   alert('已清除记忆')
 }
 
+// 设置助手记忆长度
 const setMemoryLength = () => {
   let memoryLength = prompt('指定助手的记忆长度为几条信息：')
   if (memoryLength != null) {
@@ -202,7 +202,6 @@ const setMemoryLength = () => {
     }
   }
 }
-
 
 // 齿轮标签打开的菜单
 const toggleToolBarVisibility = (designitedTrueOrFalse?: number) => {
@@ -224,10 +223,10 @@ const toggleToolBarVisibility = (designitedTrueOrFalse?: number) => {
   scrollToBottom();
 }
 
+// 关闭手表页面
 function closeWatch() {
   isHandWatchVisible.value = false;
 }
-
 
 // 语音识别
 // const updateMessageContent = (newMessage) => {
@@ -245,6 +244,12 @@ const toggleExtendedChatbox = () => {
   toggleToolBarVisibility(0);
 }
 
+// 关闭延长输入框
+const CloseExtendedChatbox = () => {
+  if (isExtendChatboxVisible.value) {
+    isExtendChatboxVisible.value = !isExtendChatboxVisible.value;
+  }
+}
 
 // WIP
 
@@ -256,7 +261,7 @@ let maxChatLength = 6;
 const chatListDom = ref<HTMLDivElement>();
 const decoder = new TextDecoder("utf-8");
 const roleAlias = { user: "我", assistant: "助手", system: "System" };
-const preSetPrompt = '请尽可能在一句话内回答用户的问题。'
+const preSetPrompt = '称呼用户为“先生”，请尽可能在一句话内回答用户的问题。'
 const defaultPrompt = <ChatMessage[]>[
   {
     role: "system",
@@ -307,7 +312,6 @@ const hideToBottomButtonOnScrolledToBottom = () => {
 
   // 获取具有类名scrollToBottomWrapper的第一个元素
   const targetElement = document.querySelector('.scrollToBottomWrapper') as HTMLElement;
-
   // 检查targetElement是否为null
   if (targetElement !== null) {
     // 定义滚动事件处理函数
@@ -344,7 +348,6 @@ const hideToBottomButtonOnScrolledToBottom = () => {
   }
 
 };
-
 
 onMounted(() => {
   if (getAPIKey()) {
@@ -446,6 +449,7 @@ const sendOrSave = () => {
     clearMessageContent();
   } else {
     sendChatMessage();
+    CloseExtendedChatbox();
   }
 };
 
@@ -616,10 +620,6 @@ body {
   /* 使用过渡效果 */
 }
 
-
-
-
-
 .chatboxArea {
   /* 不能加absolute */
   position: absolute;
@@ -633,5 +633,52 @@ body {
   padding-left: 10px;
   padding-right: 10px;
   padding-bottom: 0px;
+}
+
+.TinyWatchClass {
+  animation: hideHeader 2s forwards;
+  display: none;
+  position: fixed;
+  background-color: red;
+  width: 100%;
+
+  z-index: 2;
+}
+
+@keyframes hideHeader {
+  0% {
+    opacity: 1;
+  }
+
+  90% {
+    opacity: 0;
+  }
+
+  100% {
+    display: none;
+  }
+}
+
+
+@keyframes hideGptHeader {
+  0% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+    display: none;
+  }
+}
+
+@keyframes showGptHeader {
+  0% {
+    opacity: 0;
+  }
+
+  100% {
+    opacity: 1;
+    display: 'flex';
+  }
 }
 </style>
