@@ -261,7 +261,7 @@ let maxChatLength = 6;
 const chatListDom = ref<HTMLDivElement>();
 const decoder = new TextDecoder("utf-8");
 const roleAlias = { user: "我", assistant: "助手", system: "System" };
-const preSetPrompt = '称呼用户为“先生”，请尽可能在一句话内回答用户的问题。'
+const preSetPrompt = '请尽可能在一句话内回答用户的问题，为了更好地帮助用户你可以问用户问题'
 const defaultPrompt = <ChatMessage[]>[
   {
     role: "system",
