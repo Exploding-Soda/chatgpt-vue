@@ -1,9 +1,10 @@
 <template>
-  <div style="display:flex;width:60%">
-    <form @submit.prevent="sendMessage">
-      <div style="display:flex;">
-        <input style="width:50%;height:50px;" type="file" required @change="handleFileChange">
-        <button style="width:50%;height:50px;" type="submit">发图</button>
+  <div style="ImageUploaderWrapper">
+    <form class="fileForm" @submit.prevent="sendMessage">
+      <div class="fileWrapper">
+        <!-- <input style="width:20%;height:50px;" type="file" required @change="handleFileChange"> -->
+        <input type="file" class="file-button block">
+        <button type="submit">发图</button>
       </div>
     </form>
   </div>
@@ -80,7 +81,7 @@ export default {
               // const testExample = { role: 'assistant', content: 'The image you provided appears to be a solid red s… please let me know how I can assist you further!' }
               // emit('reply', testExample, "This jaenvaeversosblfd"); // Pass the reply back to the parent component
 
-              console.log("@ImageUploader,Payload: ", payload)
+              // console.log("@ImageUploader,Payload: ", payload)
 
               axios.post('https://api.chatanywhere.com.cn/v1/chat/completions', payload, { headers })
                 .then(response => {
@@ -136,3 +137,39 @@ export default {
   }
 }
 </script>
+
+<style scoped>
+.ImageUploaderWrapper {
+  display: flex;
+}
+
+.fileForm {
+  display: flex;
+  justify-content: right;
+}
+
+.fileWrapper {
+  display: flex;
+  justify-content: right;
+}
+
+.file-button {
+  width: 50%;
+  font-size: 10px;
+}
+
+.file-button::file-selector-button {
+  font-weight: bold;
+  color: white;
+  background: rgb(59, 59, 59);
+  font-size: 10px;
+  border: 0;
+  border-radius: 10em;
+  padding: 8px 16px;
+  text-align: center;
+}
+
+.block::file-selector-button {
+  display: block;
+}
+</style>

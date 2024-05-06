@@ -285,7 +285,7 @@ const handleReply = (response: any, userInputedContent: string) => {
 
   messageList.value.push(response.choices[0].message)
   messageList.value[messageList.value.length - 2].content = userInputedContent
-  console.log("handleReply(userInputedContent),userInputedContent= ", userInputedContent)
+  // console.log("handleReply(userInputedContent),userInputedContent= ", userInputedContent)
   clearMessageContent()
   disableInput.value = false
 }
