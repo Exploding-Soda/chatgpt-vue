@@ -32,7 +32,7 @@
         <div class="chatContentRecord">
           <!-- 聊天记录区域 -->
           <div class="group flex flex-col px-4 py-3 hover:bg-gray-800 rounded-lg"
-            v-for="item of messageList.filter((v) => v.role !== 'system')">
+            v-for="item of messageListCopy.filter((v) => v.role !== 'system')">
             <div class="flex justify-between items-center mb-2">
               <div class="font-bold">{{ roleAlias[item.role] }}.</div>
               <Copy class="invisible group-hover:visible" :content="item.content" />
@@ -40,6 +40,10 @@
             <div>
               <div v-if="item.content" v-html="md.render(item.content)"></div>
               <Loding v-else />
+            </div>
+            <!-- 当复制体里面有图片的时候渲染出图片 -->
+            <div v-if="item.imgURL != ''">
+              <img :src="item.imgURL"></img>
             </div>
           </div>
           <!-- 填充一项以免被工具栏挡住 -->
@@ -278,7 +282,7 @@ const handleReplyAwait = () => {
   disableInput.value = true
 }
 
-const handleReply = (response: any, userInputedContent: string) => {
+const handleReply = (response: any, userInputedContent: string, uploadedImageURL: string) => {
   // console.log("@home.vue获得ImageUploader的GPT回复消息：", response.choices[0].message)
   // 上面的信息拿到的内容是
   // {role: 'assistant', content: 'The image you provided appears to be a solid red s… please let me know how I can assist you further!'}
@@ -286,6 +290,9 @@ const handleReply = (response: any, userInputedContent: string) => {
   messageList.value.push(response.choices[0].message)
   messageList.value[messageList.value.length - 2].content = userInputedContent
   // console.log("handleReply(userInputedContent),userInputedContent= ", userInputedContent)
+  messageListCopy.value[messageListCopy.value.length - 2].imgURL = uploadedImageURL
+
+  console.log("@home.vue handleReply: ", messageListCopy)
   clearMessageContent()
   disableInput.value = false
 }
@@ -308,6 +315,10 @@ const defaultPrompt = <ChatMessage[]>[
   },
 ]
 const messageList = ref<ChatMessage[]>(defaultPrompt);
+// 这个拷贝监听messageList，当messageList更新的时候将它最后一个值加进去。
+// 拷贝体里面可以有更多属性，比如imgURL，这样就可以在静态页里渲染图片
+const messageListCopy = ref<ChatMessage[]>(messageList.value)
+
 let templateFromPromptTemplate = <ChatMessage[]>[];
 // 更新templateFromPromptTemplate，这个变量一开始为空
 // 用户输入过Prompt之后就会把整个对话保存进去
@@ -409,6 +420,19 @@ onMounted(() => {
   hideToBottomButtonOnScrolledToBottom();
 
 });
+
+watch(messageList.value, (newVal) => {
+
+  // 输出的是对话最后一条，GPT回复的内容
+  // console.log(newVal[newVal.length - 1])
+
+  // messageListCopy.value = newVal
+  // console.log("@home.vue: ", messageListCopy.value)
+
+  // 更改拷贝的消息记录体，不用担心会更改到用户的部分。
+  messageListCopy.value[newVal.length - 1] = newVal[newVal.length - 1]
+  console.log(messageListCopy.value)
+})
 
 const sendChatMessage = async (content: string = messageContent.value) => {
   try {

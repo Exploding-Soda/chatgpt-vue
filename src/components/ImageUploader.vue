@@ -86,7 +86,7 @@ export default {
               axios.post('https://api.chatanywhere.com.cn/v1/chat/completions', payload, { headers })
                 .then(response => {
                   responseText.value = response.data;
-                  emit('reply', response.data, messageText.value); // Pass the reply back to the parent component
+                  emit('reply', response.data, messageText.value, uploadedImageURL); // Pass the reply back to the parent component
                 })
                 .catch(error => {
                   console.error('Error:', error);
