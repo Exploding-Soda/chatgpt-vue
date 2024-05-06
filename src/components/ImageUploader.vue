@@ -3,7 +3,7 @@
     <form class="fileForm" @submit.prevent="sendMessage">
       <div class="fileWrapper">
         <!-- <input style="width:20%;height:50px;" type="file" required @change="handleFileChange"> -->
-        <input type="file" class="file-button block">
+        <input type="file" class="file-button block" required @change="handleFileChange">
         <button type="submit">发图</button>
       </div>
     </form>
