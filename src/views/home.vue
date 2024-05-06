@@ -62,7 +62,7 @@
           <div class="toolBarWrapper">
             <div class="toolBarWrapperLeft">
               <button class="toolBar" @click="toggleToolBarVisibility()">
-                {{ isToolBarVisible ? "🚪" : "⚙️" }}
+                {{ isToolBarVisible ? "🚪" : "🧰" }}<br>功能
               </button>
             </div>
 
@@ -94,6 +94,9 @@
                 🕰️<br>手表
               </button>
 
+              <button class="toolBar" @click="togglePicMode" :class="{ highlight: isGPT4Chat }">
+                🖼️<br>图片
+              </button>
             </div>
           </div>
 
@@ -114,13 +117,21 @@
             请输入 API Key：
           </div>
           <div class="flex" v-if="!isExtendChatboxVisible">
-            <input class="input" :type="isConfig ? 'password' : 'text'"
-              :placeholder="isConfig ? 'sk-xxxxxxxxxx' : '请输入'" v-model="messageContent"
-              @keydown.enter="isTalking || sendOrSave()" />
-            <button class="" style="min-width:150px;" :disabled="isTalking" @click="sendOrSave()">
+            <input :class="{ input: true, dontInput: disableInput }" :disabled="disableInput"
+              :type="isConfig ? 'password' : 'text'" :placeholder="isConfig ? 'sk-xxxxxxxxxx' : '请输入'"
+              v-model="messageContent" @keydown.enter="isTalking || sendOrSave()" />
+
+            <ImageUploader v-if="isGPT4Chat" :apiKey="apiKey" :messageContent="messageContent" @reply="handleReply"
+              @replyAwait="handleReplyAwait">
+            </ImageUploader>
+
+            <button v-if="!isGPT4Chat" class="" style="min-width:150px;" :disabled="isTalking" @click="sendOrSave()">
               {{ isConfig ? "保存" : "发送" }}
             </button>
+
           </div>
+
+
 
           <div style="height:5px;"></div>
           <!-- PromptTemplate提示词模块 -->
@@ -131,6 +142,7 @@
         </div>
       </div>
     </div>
+
   </div>
 </template>
 
@@ -143,6 +155,7 @@ import Loding from "@/components/Loding.vue";
 import Copy from "@/components/Copy.vue";
 import { md } from "@/libs/markdown";
 import TinyWatch from "@/components/TinyWatch.vue";
+import ImageUploader from '@/components/ImageUploader.vue';
 
 // WIP
 import PromptTemplate from '@/components/PromptTemplate.vue';
@@ -154,11 +167,19 @@ let isHandWatchVisible = ref(false);
 let isPromptTemplateVisible = ref(false);
 let isToolBarVisible = ref(false)
 let isExtendChatboxVisible = ref(false)
+let isGPT4Chat = ref(false)
+let disableInput = ref(false)
 
 // 切换 handWatch 页面显示的函数
 const toggleHandWatchVisibility = () => {
   isHandWatchVisible.value = !isHandWatchVisible.value;
 };
+
+// 切换发图模式
+const togglePicMode = () => {
+  // clearMessageContent()
+  isGPT4Chat.value = !isGPT4Chat.value
+}
 
 // Prompt模板，按钮可见性
 const togglePromptTemplateVisibility = (operand: number) => {
@@ -249,6 +270,24 @@ const CloseExtendedChatbox = () => {
   if (isExtendChatboxVisible.value) {
     isExtendChatboxVisible.value = !isExtendChatboxVisible.value;
   }
+}
+
+const handleReplyAwait = () => {
+  // console.log("@home.vue - handleReplyAwait: ", messageList)
+  messageList.value.push({ "role": "user", "content": "等待图片上传结束..." })
+  disableInput.value = true
+}
+
+const handleReply = (response: any, userInputedContent: string) => {
+  // console.log("@home.vue获得ImageUploader的GPT回复消息：", response.choices[0].message)
+  // 上面的信息拿到的内容是
+  // {role: 'assistant', content: 'The image you provided appears to be a solid red s… please let me know how I can assist you further!'}
+
+  messageList.value.push(response.choices[0].message)
+  messageList.value[messageList.value.length - 2].content = userInputedContent
+  console.log("handleReply(userInputedContent),userInputedContent= ", userInputedContent)
+  clearMessageContent()
+  disableInput.value = false
 }
 
 // WIP
@@ -680,5 +719,18 @@ body {
     opacity: 1;
     display: 'flex';
   }
+}
+
+.highlight {
+  background-color: rgba(155, 66, 66, 0.4);
+  transition: background-color 0.5s ease;
+  /* 添加渐变过渡效果 */
+}
+
+.dontInput {
+  opacity: 0.3;
+  background-color: rgba(32, 32, 32, 0.6);
+  transition: background-color opacity 0.5s ease;
+  /* 添加渐变过渡效果 */
 }
 </style>
