@@ -32,20 +32,31 @@
         <div class="chatContentRecord">
           <!-- 聊天记录区域 -->
           <div class="group flex flex-col px-4 py-3 hover:bg-gray-800 rounded-lg"
-            v-for="item of messageListCopy.filter((v) => v.role !== 'system')">
+            v-for="(item, index) of messageListCopy.filter((v) => v.role !== 'system')" :key="index">
             <div class="flex justify-between items-center mb-2">
+              <!-- 谁发送的信息 -->
               <div class="font-bold">{{ roleAlias[item.role] }}.</div>
+              <!-- 复制内容按钮 -->
               <Copy class="invisible group-hover:visible" :content="item.content" />
             </div>
-            <div>
-              <div v-if="item.content" v-html="md.render(item.content)"></div>
+            <!-- 发送消息的正文内容 -->
+            <div :class="{ forgotten: !(Math.abs(index - messageListCopy.length) < maxChatLength) }">
+              <div v-if="item.content" v-html="md.render(item.content)">
+              </div>
               <Loding v-else />
             </div>
             <!-- 当复制体里面有图片的时候渲染出图片 -->
             <div v-if="item.imgURL != ''">
               <img :src="item.imgURL"></img>
             </div>
+            <!-- 内容遗忘提示分界线 -->
+            <div v-if="Math.abs(index - messageListCopy.length) == maxChatLength" style="text-align: center;">
+
+              <hr style="margin-top:10px;">
+              <p style="font-size: smaller;opacity: 0.5;">助手不记得上面的对话</p>
+            </div>
           </div>
+
           <!-- 填充一项以免被工具栏挡住 -->
           <div style="height:200px;"></div>
         </div>
@@ -204,7 +215,6 @@ const togglePromptTemplateVisibility = (operand: number) => {
 const clearConversation = () => {
   if (templateFromPromptTemplate.length != 0) {
     // 用户自定义了Prompt的情况
-    messageList.value = [];
     messageList.value[0] = templateFromPromptTemplate[0];
   } else {
     // 用户没自定义Prompt的情况
@@ -220,10 +230,10 @@ const setMemoryLength = () => {
   if (memoryLength != null) {
     let intMemoryLength: number = parseInt(memoryLength)
     if (!isNaN(intMemoryLength)) {
-      maxChatLength = intMemoryLength;
-      console.log("助手记忆长度：", maxChatLength)
+      maxChatLength.value = intMemoryLength + 2;
+      console.log("助手记忆长度：", maxChatLength.value)
     } else {
-      console.log("助手记忆长度：", maxChatLength)
+      console.log("助手记忆长度：", maxChatLength.value)
     }
   }
 }
@@ -303,11 +313,11 @@ let apiKey = "";
 let isConfig = ref(true);
 let isTalking = ref(false);
 let messageContent = ref("");
-let maxChatLength = 6;
+let maxChatLength = ref(8);
 const chatListDom = ref<HTMLDivElement>();
 const decoder = new TextDecoder("utf-8");
 const roleAlias = { user: "我", assistant: "助手", system: "System" };
-const preSetPrompt = '请尽可能在一句话内回答用户的问题，为了更好地帮助用户你可以问用户问题'
+const preSetPrompt = '请尽可能在一句话内回答用户的问题'
 const defaultPrompt = <ChatMessage[]>[
   {
     role: "system",
@@ -335,6 +345,8 @@ const handleMessageListUpdate = (updatedMessageList: ChatMessage[]) => {
 
   // 更新 messageList
   messageList.value = updatedMessageList;
+  // 也同时更新复制体的，这里只更改system的prompt，用户本来就看不到，所以其实改不改对使用没有影响
+  messageListCopy.value = updatedMessageList;
 
   // 更新templateFromPromptTemplate，这个变量一开始为空，现在用来保存用户输入的prompt
   templateFromPromptTemplate = updatedMessageList
@@ -431,8 +443,8 @@ watch(messageList.value, (newVal) => {
 
   // 更改拷贝的消息记录体，不用担心会更改到用户的部分。
   messageListCopy.value[newVal.length - 1] = newVal[newVal.length - 1]
-  console.log(messageListCopy.value)
-})
+  console.log("@watch messageList.value, value Changed: ", messageListCopy.value)
+}, { deep: true })
 
 const sendChatMessage = async (content: string = messageContent.value) => {
   try {
@@ -444,15 +456,23 @@ const sendChatMessage = async (content: string = messageContent.value) => {
     clearMessageContent();
     messageList.value.push({ role: "assistant", content: "" });
 
-    const { body, status } = await chat(messageList.value, getAPIKey());
+    // 发送消息的时候检查有没有超过最长长度限制，
+    // 超过用户设定的最长长度就只截取最后 那几个元素发给GPT
+    // 不会对本地保存的messageList.value做出更改，也就是本地的对话记录还是看得到。
+    let tempMaxLengthChat = messageList.value;
+    if (tempMaxLengthChat.length > maxChatLength.value) {
+      tempMaxLengthChat = messageList.value.slice(-maxChatLength.value);
+    }
+
+    console.log("@home.vue,sendChatMessage: ", tempMaxLengthChat)
+
+    const { body, status } = await chat(tempMaxLengthChat, getAPIKey());
     if (body) {
       const reader = body.getReader();
       await readStream(reader, status);
     }
 
-    if (messageList.value.length > maxChatLength) {
-      messageList.value.splice(1, 1);
-    }
+
   } catch (error: any) {
     appendLastMessageContent(error);
   } finally {
@@ -756,5 +776,16 @@ body {
   background-color: rgba(32, 32, 32, 0.6);
   transition: background-color opacity 0.5s ease;
   /* 添加渐变过渡效果 */
+}
+
+.forgotten {
+  opacity: 0.5;
+  background-color: rgba(32, 32, 32, 0.6);
+  transition: background-color opacity 3s ease;
+  /* 添加渐变过渡效果 */
+}
+
+.forgotten image {
+  opacity: 1;
 }
 </style>
