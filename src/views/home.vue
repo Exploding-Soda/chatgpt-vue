@@ -303,7 +303,7 @@ const handleReply = (response: any, userInputedContent: string, uploadedImageURL
   messageList.value.push(response)
 
   // console.log("handleReply(userInputedContent),userInputedContent= ", userInputedContent)
-  // messageListCopy.value[messageListCopy.value.length - 2].imgURL = uploadedImageURL
+  messageListCopy.value[messageListCopy.value.length - 2].imgURL = uploadedImageURL
 
   // console.log("@home.vue handleReply: ", messageListCopy)
   clearMessageContent()

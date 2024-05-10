@@ -74,7 +74,7 @@ export default {
         })
           .then(response => {
             const responseContent = response.data.choices[0].message
-            emit('reply', responseContent, props.messageContent); // 通过事件发送响应
+            emit('reply', responseContent, props.messageContent, base64Image); // 通过事件发送响应
           })
           .catch(error => {
             console.error('Error:', error);
