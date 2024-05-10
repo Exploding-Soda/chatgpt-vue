@@ -11,7 +11,7 @@
 </template>
 
 <script>
-import { ref, watch, toRefs, watchEffect } from 'vue';
+import { ref } from 'vue';
 import axios from 'axios';
 
 export default {
@@ -23,120 +23,79 @@ export default {
     messageContent: String
   },
   setup(props, { emit }) {
-    const { messageContent, apiKey } = toRefs(props); // 解构 props 为响应式变量
-    const messageText = ref('');
-    const responseText = ref('');
-    let imageInputRef = ref(null); // 创建一个 ref 来引用文件输入框
+    const imageInputRef = ref(null);
 
-    const sendMessage = async () => {
-      // alert("@imageUploader.vue: sendMessage() ")
-      emit('replyAwait')
-      await watchEffect(() => {
-        // console.log("@watchEffect: ", imageInputRef.value)
-        if (imageInputRef.value) {
-          // alert("@ImageUploader.vue: Triggered")
-
-
-          const imageData = new FormData();
-          const imageInput = imageInputRef.value; // 使用 ref 引用文件输入框
-          imageData.append('image', imageInput);
-
-          // Generate random name
-          const randomImageName = generateRandomName(10);
-          imageData.append('name', randomImageName);
-
-          imageData.append('key', 'dbc888e27fc605c2a820eb16878983d7');
-          imageData.append('expiration', 3600);
-
-          fetch('https://api.imgbb.com/1/upload', {
-            method: 'POST',
-            body: imageData,
-          })
-            .then(response => response.json())
-            .then(result => {
-              const uploadedImageURL = result.data.url;
-
-              const payload = {
-                model: "gpt-4-turbo",
-                messages: [{
-                  role: "user",
-                  content: [{
-                    type: "text",
-                    text: messageText.value
-                  }, {
-                    type: "image_url",
-                    image_url: {
-                      url: uploadedImageURL
-                    }
-                  }]
-                }],
-                max_tokens: 150
-              };
-
-              const headers = {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${apiKey.value}`
-              };
-
-              // const testExample = { role: 'assistant', content: 'The image you provided appears to be a solid red s… please let me know how I can assist you further!' }
-              // emit('reply', testExample, "This jaenvaeversosblfd"); // Pass the reply back to the parent component
-
-              // console.log("@ImageUploader,Payload: ", payload)
-
-              axios.post('https://api.chatanywhere.com.cn/v1/chat/completions', payload, { headers })
-                .then(response => {
-                  responseText.value = response.data;
-                  emit('reply', response.data, messageText.value, uploadedImageURL); // Pass the reply back to the parent component
-                })
-                .catch(error => {
-                  console.error('Error:', error);
-                  alert('Failed to get response. Check console for details.');
-                  if (error.response) {
-                    console.log('Response data:', error.response.data);
-                    console.log('Response status:', error.response.status);
-                    console.log('Response headers:', error.response.headers);
-                  }
-                });
-            })
-            .catch(error => {
-              console.error('Error:', error);
-              alert('Failed to upload image.');
-            });
-        }
+    // 将文件转换为 base64
+    function getBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = error => reject(error);
       });
-    };
+    }
 
-    const generateRandomName = (length) => {
-      const characters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-      let result = '';
-      for (let i = 0; i < length; i++) {
-        result += characters.charAt(Math.floor(Math.random() * characters.length));
+    // 更新 imageInputRef 当用户选择文件
+    function handleFileChange(event) {
+      imageInputRef.value = event.target;
+    }
+
+    // 发送消息
+    const sendMessage = async () => {
+      if (imageInputRef.value && imageInputRef.value.files[0]) {
+        // emit wait
+        emit('letWait');
+
+        const file = imageInputRef.value.files[0];
+        const base64Image = await getBase64(file);  // 这里仍然会生成 base64，但我们将其作为 URL 对象的形式发送
+        const payload = {
+          model: "gpt-4-turbo",  // 这个模型名称可能需要根据实际情况调整
+          messages: [{
+            role: "user",
+            content: [{
+              type: "text",
+              text: props.messageContent  // 确保你传递了有效的文本内容
+            }, {
+              type: "image_url",
+              image_url: {  // 根据错误消息，我们需要确保这里是一个对象，包含一个 url 键
+                url: base64Image
+              }
+            }]
+          }],
+          max_tokens: 500
+        };
+
+        // 使用 axios 发送请求
+        axios.post('https://api.chatanywhere.com.cn/v1/chat/completions', payload, {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${props.apiKey}`
+          }
+        })
+          .then(response => {
+            const responseContent = response.data.choices[0].message
+            emit('reply', responseContent, props.messageContent); // 通过事件发送响应
+          })
+          .catch(error => {
+            console.error('Error:', error);
+            if (error.response) {
+              // 打印从服务器返回的错误信息
+              console.log('Error data:', error.response.data);
+              console.log('Error status:', error.response.status);
+              console.log('Error headers:', error.response.headers);
+            }
+          });
+      } else {
+        console.log("No file selected or file input is missing");
       }
-      return result;
     };
 
-    const handleFileChange = (event) => {
-      if (event.target.files.length > 0) {
-        const file = event.target.files[0];
-        imageInputRef.value = file
-        // Do something with the file if needed
-      }
-    };
 
-    watch(messageContent, (newVal) => {
-      messageText.value = newVal
-    });
-
-    return {
-      messageText,
-      responseText,
-      sendMessage,
-      handleFileChange,
-      imageInputRef // 返回文件输入框的 ref
-    };
+    return { sendMessage, imageInputRef, handleFileChange };
   }
 }
 </script>
+
 
 <style scoped>
 .ImageUploaderWrapper {

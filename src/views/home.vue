@@ -136,8 +136,8 @@
               :type="isConfig ? 'password' : 'text'" :placeholder="isConfig ? 'sk-xxxxxxxxxx' : '请输入'"
               v-model="messageContent" @keydown.enter="isTalking || sendOrSave()" />
 
-            <ImageUploader v-if="isGPT4Chat" :apiKey="apiKey" :messageContent="messageContent" @reply="handleReply"
-              @replyAwait="handleReplyAwait">
+            <ImageUploader v-if="isGPT4Chat" :apiKey="apiKey" :messageContent="messageContent"
+              :messageList="messageList" @reply="handleReply" @letWait="ImageUploaderWait">
             </ImageUploader>
 
             <button v-if="!isGPT4Chat" class="" style="min-width:150px;" :disabled="isTalking" @click="sendOrSave()">
@@ -286,23 +286,26 @@ const CloseExtendedChatbox = () => {
   }
 }
 
-const handleReplyAwait = () => {
-  // console.log("@home.vue - handleReplyAwait: ", messageList)
-  messageList.value.push({ "role": "user", "content": "等待图片上传结束..." })
+const ImageUploaderWait = () => {
+  messageList.value.push({ role: 'user', content: "等待图片回复..." })
   disableInput.value = true
 }
+
 
 const handleReply = (response: any, userInputedContent: string, uploadedImageURL: string) => {
   // console.log("@home.vue获得ImageUploader的GPT回复消息：", response.choices[0].message)
   // 上面的信息拿到的内容是
   // {role: 'assistant', content: 'The image you provided appears to be a solid red s… please let me know how I can assist you further!'}
 
-  messageList.value.push(response.choices[0].message)
-  messageList.value[messageList.value.length - 2].content = userInputedContent
-  // console.log("handleReply(userInputedContent),userInputedContent= ", userInputedContent)
-  messageListCopy.value[messageListCopy.value.length - 2].imgURL = uploadedImageURL
 
-  console.log("@home.vue handleReply: ", messageListCopy)
+  messageList.value[messageList.value.length - 1] = { role: "user", content: userInputedContent }
+  console.log("@home.vue-handleReply: ", response)
+  messageList.value.push(response)
+
+  // console.log("handleReply(userInputedContent),userInputedContent= ", userInputedContent)
+  // messageListCopy.value[messageListCopy.value.length - 2].imgURL = uploadedImageURL
+
+  // console.log("@home.vue handleReply: ", messageListCopy)
   clearMessageContent()
   disableInput.value = false
 }
