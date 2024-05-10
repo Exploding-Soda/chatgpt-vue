@@ -25,13 +25,40 @@ export default {
   setup(props, { emit }) {
     const imageInputRef = ref(null);
 
-    // 将文件转换为 base64
-    function getBase64(file) {
+    // 将文件转换为 base64 并压缩图片
+    function compressImage(file) {
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
+
+        reader.onload = function (event) {
+          const img = new Image();
+          img.src = event.target.result;
+
+          img.onload = function () {
+            const aspectRatio = img.width / img.height;
+            // 高度将会是maxHeight*1.78
+            const maxHeight = 768;
+            const maxWidth = maxHeight * aspectRatio;
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+
+            if (img.height > maxHeight) {
+              canvas.height = maxHeight;
+              canvas.width = maxWidth;
+            } else {
+              canvas.height = img.height;
+              canvas.width = img.width;
+            }
+
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            const compressedBase64 = canvas.toDataURL('image/jpeg');
+            resolve(compressedBase64);
+          };
+          img.onerror = reject;
+        };
+
+        reader.onerror = reject;
         reader.readAsDataURL(file);
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = error => reject(error);
       });
     }
 
@@ -47,7 +74,8 @@ export default {
         emit('letWait');
 
         const file = imageInputRef.value.files[0];
-        const base64Image = await getBase64(file);  // 这里仍然会生成 base64，但我们将其作为 URL 对象的形式发送
+        const base64Image = await compressImage(file);  // 使用压缩图片的功能
+
         const payload = {
           model: "gpt-4-turbo",  // 这个模型名称可能需要根据实际情况调整
           messages: [{
@@ -95,6 +123,7 @@ export default {
   }
 }
 </script>
+
 
 
 <style scoped>
