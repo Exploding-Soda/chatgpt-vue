@@ -41,9 +41,11 @@
             </div>
             <!-- 发送消息的正文内容 -->
             <div :class="{ forgotten: !(Math.abs(index - messageListCopy.length) < maxChatLength) }">
-              <div v-if="item.content" v-html="md.render(item.content)">
+              <div v-if="item.content"
+                v-html="md.render(typeof (item.content) == 'string' ? item.content : '等待GPT-4响应...')">
               </div>
               <Loding v-else />
+
             </div>
             <!-- 当复制体里面有图片的时候渲染出图片 -->
             <div v-if="item.imgURL != ''">
@@ -110,7 +112,7 @@
               </button>
 
               <button class="toolBar" @click="togglePicMode" :class="{ highlight: isGPT4Chat }">
-                🖼️<br>图片
+                🖼️<br>GPT4
               </button>
             </div>
           </div>
@@ -136,8 +138,9 @@
               :type="isConfig ? 'password' : 'text'" :placeholder="isConfig ? 'sk-xxxxxxxxxx' : '请输入'"
               v-model="messageContent" @keydown.enter="isTalking || sendOrSave()" />
 
-            <ImageUploader v-if="isGPT4Chat" :apiKey="apiKey" :messageContent="messageContent"
-              :messageList="messageList" @reply="handleReply" @letWait="ImageUploaderWait">
+            <ImageUploader v-show="isGPT4Chat" ref="ImageUploaderRef" :maxChatLength="maxChatLength" :apiKey="apiKey"
+              :messageContent="messageContent" :messageList="messageList" @reply="handleReply"
+              @letWait="ImageUploaderWait">
             </ImageUploader>
 
             <button v-if="!isGPT4Chat" class="" style="min-width:150px;" :disabled="isTalking" @click="sendOrSave()">
@@ -287,7 +290,7 @@ const CloseExtendedChatbox = () => {
 }
 
 const ImageUploaderWait = () => {
-  messageList.value.push({ role: 'user', content: "等待图片回复..." })
+  // messageList.value.push({ role: 'user', content: "等待图片回复..." })
   disableInput.value = true
 }
 
@@ -297,9 +300,11 @@ const handleReply = (response: any, userInputedContent: string, uploadedImageURL
   // 上面的信息拿到的内容是
   // {role: 'assistant', content: 'The image you provided appears to be a solid red s… please let me know how I can assist you further!'}
 
+  // console.log("@home.vue: 收到ImageUploader：", response)
 
+  // console.log("@home.vue 整个MessageListCopy：", messageListCopy.value)
   messageList.value[messageList.value.length - 1] = { role: "user", content: userInputedContent }
-  console.log("@home.vue-handleReply: ", response)
+  // console.log("@home.vue-handleReply: ", response)
   messageList.value.push(response)
 
   // console.log("handleReply(userInputedContent),userInputedContent= ", userInputedContent)
@@ -308,6 +313,8 @@ const handleReply = (response: any, userInputedContent: string, uploadedImageURL
   // console.log("@home.vue handleReply: ", messageListCopy)
   clearMessageContent()
   disableInput.value = false
+
+  console.log("@home.vue messageList:", messageList.value)
 }
 
 // WIP
@@ -317,6 +324,9 @@ let isConfig = ref(true);
 let isTalking = ref(false);
 let messageContent = ref("");
 let maxChatLength = ref(8);
+
+const ImageUploaderRef = ref(null)
+
 const chatListDom = ref<HTMLDivElement>();
 const decoder = new TextDecoder("utf-8");
 const roleAlias = { user: "我", assistant: "助手", system: "System" };
@@ -446,7 +456,7 @@ watch(messageList.value, (newVal) => {
 
   // 更改拷贝的消息记录体，不用担心会更改到用户的部分。
   messageListCopy.value[newVal.length - 1] = newVal[newVal.length - 1]
-  console.log("@watch messageList.value, value Changed: ", messageListCopy.value)
+  // console.log("@watch messageList.value, value Changed: ", messageListCopy.value)
 }, { deep: true })
 
 const sendChatMessage = async (content: string = messageContent.value) => {
@@ -467,7 +477,7 @@ const sendChatMessage = async (content: string = messageContent.value) => {
       tempMaxLengthChat = messageList.value.slice(-maxChatLength.value);
     }
 
-    console.log("@home.vue,sendChatMessage: ", tempMaxLengthChat)
+    // console.log("@home.vue,sendChatMessage: ", tempMaxLengthChat)
 
     const { body, status } = await chat(tempMaxLengthChat, getAPIKey());
     if (body) {
@@ -534,6 +544,13 @@ const sendOrSave = () => {
     }
     clearMessageContent();
   } else {
+    // 增加在调用ImageUploader里面的发送
+    if (isGPT4Chat.value) {
+      ImageUploaderSendMessage();
+      console.log("Using GPT-4")
+      return 0;
+    }
+    console.log("Using GPT-3.5")
     sendChatMessage();
     CloseExtendedChatbox();
   }
@@ -578,6 +595,12 @@ const scrollToBottom = () => {
   if (!chatListDom.value) return;
   scrollTo(0, chatListDom.value.scrollHeight);
 };
+
+const ImageUploaderSendMessage = () => {
+  if (ImageUploaderRef.value) {
+    (ImageUploaderRef.value as any).sendMessage()
+  }
+}
 
 const test = () => {
   alert('test')

@@ -3,7 +3,7 @@
     <form class="fileForm" @submit.prevent="sendMessage">
       <div class="fileWrapper">
         <!-- <input style="width:20%;height:50px;" type="file" required @change="handleFileChange"> -->
-        <input type="file" class="file-button block" required @change="handleFileChange">
+        <input type="file" class="file-button block" @change="handleFileChange">
         <button type="submit">发图</button>
       </div>
     </form>
@@ -11,7 +11,7 @@
 </template>
 
 <script>
-import { ref } from 'vue';
+import { onMounted, ref } from 'vue';
 import axios from 'axios';
 
 export default {
@@ -20,7 +20,13 @@ export default {
       type: String,
       required: true
     },
-    messageContent: String
+    messageContent: String,
+    maxChatLength: Number,
+    messageList: {
+      type: Array,
+      required: false,
+      default: []
+    }
   },
   setup(props, { emit }) {
     const imageInputRef = ref(null);
@@ -69,59 +75,74 @@ export default {
 
     // 发送消息
     const sendMessage = async () => {
+      emit('letWait');
+      let payload = {
+        model: "gpt-4-turbo",
+        messages: [],
+        max_tokens: 500
+      };
+
+      let base64Image = null;
+      let file = null;
+
+      payload.messages = props.messageList
+      // 如果没有图片，那么在payload里塞入正常对话的内容
       if (imageInputRef.value && imageInputRef.value.files[0]) {
-        // emit wait
-        emit('letWait');
-
-        const file = imageInputRef.value.files[0];
-        const base64Image = await compressImage(file);  // 使用压缩图片的功能
-
-        const payload = {
-          model: "gpt-4-turbo",  // 这个模型名称可能需要根据实际情况调整
-          messages: [{
+        // 有图片的情况
+        file = imageInputRef.value.files[0];
+        base64Image = await compressImage(file);  // 使用压缩图片的功能
+        payload.messages.push(
+          {
             role: "user",
-            content: [{
-              type: "text",
-              text: props.messageContent  // 确保你传递了有效的文本内容
-            }, {
-              type: "image_url",
-              image_url: {  // 根据错误消息，我们需要确保这里是一个对象，包含一个 url 键
-                url: base64Image
+            content: [
+              {
+                type: "text",
+                text: props.messageContent
+              },
+              {
+                type: "image_url",
+                image_url: {
+                  url: base64Image
+                }
               }
-            }]
-          }],
-          max_tokens: 500
-        };
-
-        // 使用 axios 发送请求
-        axios.post('https://api.chatanywhere.com.cn/v1/chat/completions', payload, {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${props.apiKey}`
+            ]
           }
-        })
-          .then(response => {
-            const responseContent = response.data.choices[0].message
-            emit('reply', responseContent, props.messageContent, base64Image); // 通过事件发送响应
-          })
-          .catch(error => {
-            console.error('Error:', error);
-            if (error.response) {
-              // 打印从服务器返回的错误信息
-              console.log('Error data:', error.response.data);
-              console.log('Error status:', error.response.status);
-              console.log('Error headers:', error.response.headers);
-            }
-          });
+        )
+        imageInputRef.value = ""
+
       } else {
-        console.log("No file selected or file input is missing");
+        // 没有图片的情况
+        payload.messages.push(
+          { role: "user", content: props.messageContent })
       }
+
+      // 使用 axios 发送请求
+      axios.post('https://api.chatanywhere.com.cn/v1/chat/completions', payload, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${props.apiKey}`
+        }
+      })
+        .then(response => {
+          const responseContent = response.data.choices[0].message
+          // console.log("@ImageUploader: response = ", responseContent)
+          emit('reply', responseContent, props.messageContent, base64Image); // 通过事件发送响应
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          if (error.response) {
+            // 打印从服务器返回的错误信息
+            console.log('Error data:', error.response.data);
+            console.log('Error status:', error.response.status);
+            console.log('Error headers:', error.response.headers);
+          }
+        });
     };
 
-
-    return { sendMessage, imageInputRef, handleFileChange };
+    return { sendMessage, imageInputRef, handleFileChange, sendMessage };
   }
 }
+
 </script>
 
 
