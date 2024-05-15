@@ -112,7 +112,7 @@
               </button>
 
               <button class="toolBar" @click="togglePicMode" :class="{ highlight: isGPT4Chat }">
-                🖼️<br>GPT4
+                🖼️<br>GPT4o
               </button>
             </div>
           </div>
