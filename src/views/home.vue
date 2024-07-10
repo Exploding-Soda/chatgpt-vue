@@ -11,9 +11,11 @@
           <div class="ml-4 text-sm">
             OpenAI 的 ChatGPT
           </div>
+
           <div class="ml-auto px-3 py-2 text-sm cursor-pointer hover:bg-white rounded-md" @click="clickConfig()">
             🛠️
           </div>
+          <div :class="{ 'ellipsis': !isExpanded }" @click="toggleExpand">{{ messageList[0].content }}</div>
         </div>
         <!-- 滚动到底部 -->
         <div class='scrollToBottomWrapper'>
@@ -74,6 +76,7 @@
                 {{ isToolBarVisible ? "🚪" : "🧰" }}<br>功能
               </button>
             </div>
+
             <div class="toolBarWrapperRight">
               <button class="toolBar" @click="createNewChat">
                 ✨<br>新的
@@ -160,6 +163,11 @@ let disableInput = ref(false);
 let currentChatId = ref<number | null>(null);
 let currentChatName = ref('');
 let isChatHistoryVisible = ref(false);
+
+let isExpanded = ref(false);
+const toggleExpand = () => {
+  isExpanded.value = !isExpanded.value;
+};
 
 const createNewChat = () => {
   currentChatId.value = null;
@@ -601,6 +609,17 @@ const test = () => {
 </script>
 
 <style scoped>
+.ellipsis {
+  white-space: nowrap;
+  /* 强制文本在同一行显示 */
+  overflow: hidden;
+  /* 隐藏溢出的部分 */
+  text-overflow: ellipsis;
+  /* 使用省略号替代被截断的文本 */
+  width: 200px;
+  /* 设置元素的宽度，确保文本能被截断 */
+}
+
 pre {
   font-family: -apple-system, "Noto Sans", "Helvetica Neue", Helvetica,
     "Nimbus Sans L", Arial, "Liberation Sans", "PingFang SC", "Hiragino Sans GB",
