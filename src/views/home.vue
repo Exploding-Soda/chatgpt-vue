@@ -15,7 +15,8 @@
           <div class="ml-auto px-3 py-2 text-sm cursor-pointer hover:bg-white rounded-md" @click="clickConfig()">
             🛠️
           </div>
-          <div :class="{ 'ellipsis': !isExpanded }" @click="toggleExpand">{{ messageList[0].content }}</div>
+          <div :class="{ 'ellipsis': !isExpanded }" @click="toggleExpand">{{ messageList[0].content != undefined ?
+            messageList[0].content : "None" }}</div>
         </div>
         <!-- 滚动到底部 -->
         <div class='scrollToBottomWrapper'>
@@ -172,9 +173,10 @@ const toggleExpand = () => {
 const createNewChat = () => {
   currentChatId.value = null;
   currentChatName.value = '';
-  messageList.value = [];
-  messageListCopy.value = [];
+  messageList.value = defaultPrompt;
+  messageListCopy.value = defaultPrompt;
 };
+
 
 const updateChatInDB = async (id: number, chatName: string, chatContent: ChatMessage[]) => {
   const db: IDBDatabase = await openDB();
