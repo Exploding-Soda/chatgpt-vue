@@ -75,11 +75,14 @@
               </button>
             </div>
             <div class="toolBarWrapperRight">
+              <button class="toolBar" @click="createNewChat">
+                ✨<br>新的
+              </button>
+              <button class="toolBar" @click="toggleChatHistoryVisibility">
+                📋<br>聊天
+              </button>
               <button class="toolBar" @click="togglePromptTemplateVisibility(1)">
                 📋<br>模板
-              </button>
-              <button class="toolBar" @click="clearConversation">
-                💭<br>刷新
               </button>
               <button class="toolBar" @click="togglePicMode" :class="{ highlight: isGPT4Chat }">
                 🖼️<br>GPT4o
@@ -98,6 +101,10 @@
             </button>
           </div>
           <!-- 更长输入框模块 -->
+          <!-- <div>
+            <input v-model="currentChatName" placeholder="对话名称" />
+            <button @click="saveCurrentChat">保存对话</button>
+          </div> -->
           <div class="-mt-2 mb-2 text-sm text-gray-500" v-if="isConfig">
             请输入 API Key：
           </div>
@@ -119,7 +126,8 @@
             @update:messageList="handleMessageListUpdate"
             @update:hidePromptTemplate="togglePromptTemplateVisibility(0)" />
 
-          <chatHistory v-if="isChatHistoryVisible" :messageList="messageList" />
+          <chatHistory v-if="isChatHistoryVisible" :messageList="messageList" @loadChat="loadChat"
+            @click="toggleChatHistoryVisibility" @update:hideChatHistory="hideChatHistory" />
           <!-- PromptTemplate提示词模块 -->
         </div>
       </div>
@@ -145,11 +153,124 @@ import HandWatch from "@/components/HandWatch.vue";
 // 控制 handWatch 页面显示的状态变量
 let isHandWatchVisible = ref(false);
 let isPromptTemplateVisible = ref(false);
-let isToolBarVisible = ref(false)
-let isExtendChatboxVisible = ref(false)
-let isGPT4Chat = ref(false)
-let disableInput = ref(false)
-let isChatHistoryVisible = ref(false)
+let isToolBarVisible = ref(false);
+let isExtendChatboxVisible = ref(false);
+let isGPT4Chat = ref(false);
+let disableInput = ref(false);
+let currentChatId = ref<number | null>(null);
+let currentChatName = ref('');
+let isChatHistoryVisible = ref(false);
+
+const createNewChat = () => {
+  currentChatId.value = null;
+  currentChatName.value = '';
+  messageList.value = [];
+  messageListCopy.value = [];
+};
+
+const updateChatInDB = async (id: number, chatName: string, chatContent: ChatMessage[]) => {
+  const db: IDBDatabase = await openDB();
+  const tx = db.transaction('ChatList', 'readwrite');
+  const store = tx.objectStore('ChatList');
+
+  await new Promise<void>((resolve, reject) => {
+    const request = store.put({ id, name: chatName, content: JSON.stringify(chatContent) });
+    request.onsuccess = () => resolve();
+    request.onerror = (event) => reject(event);
+  });
+};
+
+const toggleChatHistoryVisibility = () => {
+  isChatHistoryVisible.value = !isChatHistoryVisible.value;
+  if (isChatHistoryVisible.value) {
+    nextTick(() => {
+      const chatHistoryComponent = chatHistory.value;
+      if (chatHistoryComponent && chatHistoryComponent.refreshChatList) {
+        chatHistoryComponent.refreshChatList();
+      }
+    });
+  }
+};
+
+const hideChatHistory = () => {
+  isChatHistoryVisible.value = false;
+};
+
+const saveCurrentChat = async () => {
+  const chatName = currentChatName.value || new Date().toLocaleString();
+  if (currentChatId.value !== null) {
+    await updateChatInDB(currentChatId.value, chatName, messageList.value);
+  } else {
+    const newChatId = await saveChatToDB(chatName, messageList.value);
+    currentChatId.value = newChatId;
+  }
+};
+
+// IndexedDB相关函数
+const openDB = async (): Promise<IDBDatabase> => {
+  const request = indexedDB.open('ChatDB', 1);
+  return new Promise((resolve, reject) => {
+    request.onupgradeneeded = (event: IDBVersionChangeEvent) => {
+      const db = (event.target as IDBOpenDBRequest).result;
+      if (!db.objectStoreNames.contains('ChatList')) {
+        db.createObjectStore('ChatList', { keyPath: 'id', autoIncrement: true });
+      }
+    };
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = (event) => reject(event);
+  });
+};
+
+const saveChatToDB = async (chatName: string, chatContent: ChatMessage[]): Promise<number> => {
+  const db: IDBDatabase = await openDB();
+  const tx = db.transaction('ChatList', 'readwrite');
+  const store = tx.objectStore('ChatList');
+
+  return new Promise<number>((resolve, reject) => {
+    const request = store.add({ name: chatName, content: JSON.stringify(chatContent) });
+    request.onsuccess = (event) => resolve((event.target as IDBRequest).result as number);
+    request.onerror = (event) => reject(event);
+  });
+};
+
+const loadChatFromDB = async (id: number): Promise<any> => {
+  const db: IDBDatabase = await openDB();
+  const tx = db.transaction('ChatList', 'readonly');
+  const store = tx.objectStore('ChatList');
+
+  return new Promise((resolve, reject) => {
+    const request = store.get(id);
+    request.onsuccess = () => {
+      const result = request.result;
+      if (result) {
+        result.content = JSON.parse(result.content);
+      }
+      resolve(result);
+    };
+    request.onerror = (event) => reject(event);
+  });
+};
+
+// 加载选中的对话
+const loadChat = async (id: number) => {
+  // toggleChatHistoryVisibility()
+  const chat = await loadChatFromDB(id);
+  if (chat) {
+    currentChatId.value = chat.id;
+    currentChatName.value = chat.name;
+    messageList.value = chat.content;
+    messageListCopy.value = chat.content;
+    localStorage.setItem('lastChatID', id.toString());
+  }
+};
+
+// 加载最后一次的对话
+const loadLastChat = async () => {
+  const lastChatID = localStorage.getItem('lastChatID');
+  if (lastChatID) {
+    await loadChat(parseInt(lastChatID));
+  }
+};
 
 // 切换 handWatch 页面显示的函数
 const toggleHandWatchVisibility = () => {
@@ -158,50 +279,37 @@ const toggleHandWatchVisibility = () => {
 
 // 切换发图模式
 const togglePicMode = () => {
-  // clearMessageContent()
-  isGPT4Chat.value = !isGPT4Chat.value
-}
+  // clearMessageContent();
+  isGPT4Chat.value = !isGPT4Chat.value;
+};
 
 // Prompt模板，按钮可见性
 const togglePromptTemplateVisibility = (operand: number) => {
   if (operand == 0) {
     // 代表是从工具菜单里点进来的，会在打开模板菜单后关闭工具菜单
-    isPromptTemplateVisible.value = !isPromptTemplateVisible.value
-    isToolBarVisible.value = false
+    isPromptTemplateVisible.value = !isPromptTemplateVisible.value;
+    isToolBarVisible.value = false;
   }
   if (operand == 1) {
     // 代表常规切换模板菜单可见性
-    isPromptTemplateVisible.value = !isPromptTemplateVisible.value
+    isPromptTemplateVisible.value = !isPromptTemplateVisible.value;
   }
   scrollToBottom();
-}
-
-// 清空对话
-const clearConversation = () => {
-  if (templateFromPromptTemplate.length != 0) {
-    // 用户自定义了Prompt的情况
-    messageList.value[0] = templateFromPromptTemplate[0];
-  } else {
-    // 用户没自定义Prompt的情况
-    messageList.value = [];
-    messageList.value[0] = defaultPrompt[0];
-  }
-  alert('已清除记忆')
-}
+};
 
 // 设置助手记忆长度
 const setMemoryLength = () => {
-  let memoryLength = prompt('指定助手的记忆长度为几条信息：')
+  let memoryLength = prompt('指定助手的记忆长度为几条信息：');
   if (memoryLength != null) {
-    let intMemoryLength: number = parseInt(memoryLength)
+    let intMemoryLength: number = parseInt(memoryLength);
     if (!isNaN(intMemoryLength)) {
       maxChatLength.value = intMemoryLength + 2;
-      console.log("助手记忆长度：", maxChatLength.value)
+      console.log("助手记忆长度：", maxChatLength.value);
     } else {
-      console.log("助手记忆长度：", maxChatLength.value)
+      console.log("助手记忆长度：", maxChatLength.value);
     }
   }
-}
+};
 
 // 齿轮标签打开的菜单
 const toggleToolBarVisibility = (designitedTrueOrFalse?: number) => {
@@ -210,10 +318,10 @@ const toggleToolBarVisibility = (designitedTrueOrFalse?: number) => {
     isToolBarVisible.value = false;
     return 1;
   }
-  isToolBarVisible.value = !isToolBarVisible.value
+  isToolBarVisible.value = !isToolBarVisible.value;
   // 如果点击齿轮的时候 任何一个其他功能的菜单 已经被打开了
   // 那么就不打开 额外菜单 关闭所有的额外功能，回到GPT页面
-  let anyMenuIsOn = (isPromptTemplateVisible.value == true)
+  let anyMenuIsOn = (isPromptTemplateVisible.value == true);
 
   if (anyMenuIsOn) {
     isHandWatchVisible.value = false;
@@ -221,7 +329,7 @@ const toggleToolBarVisibility = (designitedTrueOrFalse?: number) => {
     isToolBarVisible.value = false;
   }
   scrollToBottom();
-}
+};
 
 // 关闭手表页面
 function closeWatch() {
@@ -231,41 +339,41 @@ function closeWatch() {
 
 // 延长的聊天输入框
 const toggleExtendedChatbox = () => {
-  isExtendChatboxVisible.value = !isExtendChatboxVisible.value
+  isExtendChatboxVisible.value = !isExtendChatboxVisible.value;
   setTimeout(() => {
     scrollToBottom();
   }, 20);
 
   // 再关闭所有已经打开的工具栏
   toggleToolBarVisibility(0);
-}
+};
 
 // 关闭延长输入框
 const CloseExtendedChatbox = () => {
   if (isExtendChatboxVisible.value) {
     isExtendChatboxVisible.value = !isExtendChatboxVisible.value;
   }
-}
+};
 
 const ImageUploaderWait = () => {
-  // messageList.value.push({ role: 'user', content: "等待图片回复..." })
-  disableInput.value = true
-}
+  // messageList.value.push({ role: 'user', content: "等待图片回复..." });
+  disableInput.value = true;
+};
 
 const getLastSelectedPrompt = () => {
   return localStorage.getItem("lastSelectedPrompt") || '你是一名智能助手，你需要解答用户的问题或满足用户的要求';
 };
 
 const handleReply = (response: any, userInputedContent: string, uploadedImageURL: string | null) => {
-  messageList.value[messageList.value.length - 1] = { role: "user", content: userInputedContent }
-  messageList.value.push(response)
+  messageList.value[messageList.value.length - 1] = { role: "user", content: userInputedContent };
+  messageList.value.push(response);
   if (uploadedImageURL != null) {
-    messageList.value[messageListCopy.value.length - 2].imgURL = uploadedImageURL
+    messageList.value[messageListCopy.value.length - 2].imgURL = uploadedImageURL;
   }
-  clearMessageContent()
-  disableInput.value = false
-  console.log("@home.vue messageList:", messageList.value)
-}
+  clearMessageContent();
+  disableInput.value = false;
+  console.log("@home.vue messageList:", messageList.value);
+};
 
 let apiKey = "";
 let isConfig = ref(true);
@@ -273,7 +381,7 @@ let isTalking = ref(false);
 let messageContent = ref("");
 let maxChatLength = ref(2048);
 
-const ImageUploaderRef = ref(null)
+const ImageUploaderRef = ref(null);
 const chatListDom = ref<HTMLDivElement>();
 const decoder = new TextDecoder("utf-8");
 const roleAlias = { user: "我", assistant: "助手", system: "System" };
@@ -285,15 +393,15 @@ const defaultPrompt = <ChatMessage[]>[
   },
 ];
 const messageList = ref<ChatMessage[]>(defaultPrompt);
-const messageListCopy = ref<ChatMessage[]>(messageList.value)
+const messageListCopy = ref<ChatMessage[]>(messageList.value);
 
 let templateFromPromptTemplate = <ChatMessage[]>[];
 // 这个是在用户编辑了prompt模板并保存之后调用的
 const handleMessageListUpdate = (updatedMessageList: ChatMessage[]) => {
-  console.log("updatedMessageList:\n", updatedMessageList)
+  console.log("updatedMessageList:\n", updatedMessageList);
   messageList.value = updatedMessageList;
   messageListCopy.value = updatedMessageList;
-  templateFromPromptTemplate = updatedMessageList
+  templateFromPromptTemplate = updatedMessageList;
   // Save the content to localStorage
   if (updatedMessageList.length > 0 && updatedMessageList[0].content) {
     localStorage.setItem("lastSelectedPrompt", updatedMessageList[0].content);
@@ -345,7 +453,7 @@ const hideToBottomButtonOnScrolledToBottom = () => {
   }
 };
 
-onMounted(() => {
+onMounted(async () => {
   if (getAPIKey()) {
     switchConfigStatus();
   }
@@ -356,11 +464,13 @@ onMounted(() => {
     isHandWatchVisible.value = true;
   }
   hideToBottomButtonOnScrolledToBottom();
+
+  await loadLastChat();
 });
 
 watch(messageList.value, (newVal) => {
-  messageListCopy.value[newVal.length - 1] = newVal[newVal.length - 1]
-}, { deep: true })
+  messageListCopy.value[newVal.length - 1] = newVal[newVal.length - 1];
+}, { deep: true });
 
 const sendChatMessage = async (content: string = messageContent.value) => {
   try {
@@ -373,7 +483,7 @@ const sendChatMessage = async (content: string = messageContent.value) => {
     messageList.value.push({ role: "assistant", content: "" });
     let tempMaxLengthChat = messageList.value;
 
-    // // 记忆长度限制功能
+    // 记忆长度限制功能
     if (tempMaxLengthChat.length > maxChatLength.value) {
       tempMaxLengthChat = messageList.value.slice(-maxChatLength.value);
     }
@@ -383,6 +493,10 @@ const sendChatMessage = async (content: string = messageContent.value) => {
       const reader = body.getReader();
       await readStream(reader, status);
     }
+
+    // 保存当前对话
+    await saveCurrentChat();
+
   } catch (error: any) {
     appendLastMessageContent(error);
   } finally {
@@ -435,10 +549,10 @@ const sendOrSave = () => {
   } else {
     if (isGPT4Chat.value) {
       ImageUploaderSendMessage();
-      console.log("Using GPT-4")
+      console.log("Using GPT-4");
       return 0;
     }
-    console.log("Using GPT-3.5")
+    console.log("Using GPT-3.5");
     sendChatMessage();
     CloseExtendedChatbox();
   }
@@ -478,13 +592,12 @@ const scrollToBottom = () => {
 };
 const ImageUploaderSendMessage = () => {
   if (ImageUploaderRef.value) {
-    (ImageUploaderRef.value as any).sendMessage()
+    (ImageUploaderRef.value as any).sendMessage();
   }
-}
+};
 const test = () => {
-  alert('test')
-}
-
+  alert('test');
+};
 </script>
 
 <style scoped>
