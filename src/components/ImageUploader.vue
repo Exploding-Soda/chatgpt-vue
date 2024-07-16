@@ -1,14 +1,14 @@
 <template>
-  <div style="ImageUploaderWrapper">
+  <div class="ImageUploaderWrapper">
     <form class="fileForm" @submit.prevent="sendMessage">
       <div class="fileWrapper">
-        <!-- <input style="width:20%;height:50px;" type="file" required @change="handleFileChange"> -->
-        <input type="file" class="file-button block" @change="handleFileChange">
-        <button type="submit">发图</button>
+        <input type="file" class="file-button" @change="handleFileChange">
+        <button type="submit" class="send-button">发送</button>
       </div>
     </form>
   </div>
 </template>
+
 
 <script>
 import { onMounted, ref } from 'vue';
@@ -145,26 +145,32 @@ export default {
 
 </script>
 
-
-
 <style scoped>
 .ImageUploaderWrapper {
+  width: 150px;
   display: flex;
+  align-items: center;
+  /* 确保子元素垂直居中 */
 }
 
 .fileForm {
   display: flex;
-  justify-content: right;
+  align-items: center;
+  /* 确保子元素垂直居中 */
 }
 
 .fileWrapper {
   display: flex;
-  justify-content: right;
+  justify-content: space-around;
+  /* 确保子元素垂直居中 */
 }
 
 .file-button {
   width: 50%;
   font-size: 10px;
+  margin: 0 0 0 0;
+  gap: 0 0 0 0;
+  /* 给按钮之间增加一点间距 */
 }
 
 .file-button::file-selector-button {
@@ -178,7 +184,15 @@ export default {
   text-align: center;
 }
 
-.block::file-selector-button {
-  display: block;
+.send-button {
+  align-self: right;
+  padding: 8px 16px;
+  font-size: 10px;
+  font-weight: bold;
+  color: white;
+  background: rgb(59, 59, 59);
+  border: 0;
+  border-radius: 10em;
+  cursor: pointer;
 }
 </style>

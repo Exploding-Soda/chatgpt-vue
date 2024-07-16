@@ -170,11 +170,22 @@ const toggleExpand = () => {
   isExpanded.value = !isExpanded.value;
 };
 
-const createNewChat = () => {
-  currentChatId.value = null;
-  currentChatName.value = '';
-  messageList.value = defaultPrompt;
-  messageListCopy.value = defaultPrompt;
+const createNewChat = async () => {
+  const chatName = new Date().toLocaleString(); // 使用当前时间作为默认聊天名称
+  const chatContent = defaultPrompt;
+  isChatHistoryVisible.value = false
+
+  try {
+    const newChatId = await saveChatToDB(chatName, chatContent);
+
+    // 设置当前聊天的ID和名称
+    currentChatId.value = newChatId;
+    currentChatName.value = chatName;
+    messageList.value = chatContent;
+    messageListCopy.value = chatContent;
+  } catch (error) {
+    console.error("Failed to create a new chat:", error);
+  }
 };
 
 
