@@ -130,8 +130,11 @@
             @update:messageList="handleMessageListUpdate"
             @update:hidePromptTemplate="togglePromptTemplateVisibility(0)" />
 
+          <!-- <chatHistory v-if="isChatHistoryVisible" :messageList="messageList" @loadChat="loadChat"
+            @click="toggleChatHistoryVisibility" @update:hideChatHistory="hideChatHistory" /> -->
+
           <chatHistory v-if="isChatHistoryVisible" :messageList="messageList" @loadChat="loadChat"
-            @click="toggleChatHistoryVisibility" @update:hideChatHistory="hideChatHistory" />
+            @update:hideChatHistory="hideChatHistory" />
           <!-- PromptTemplate提示词模块 -->
         </div>
       </div>
