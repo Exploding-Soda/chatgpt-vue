@@ -117,7 +117,7 @@ export default {
       }
 
       // 使用 axios 发送请求
-      axios.post('https://api.chatanywhere.com.cn/v1/chat/completions', payload, {
+      axios.post('https://api.chatanywhere.tech/v1/chat/completions', payload, {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${props.apiKey}`
